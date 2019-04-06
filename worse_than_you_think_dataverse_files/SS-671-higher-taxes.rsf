@@ -1,0 +1,23 @@
+## RUN.id 671
+## SSASIM CBA mode run: higher payroll tax rate reform beginning in 2013
+
+create ssasim run same as run 12 except:
+table RUN field n_test_yrs is 75
+table RUN field num_years is 82
+table RUN field scenarios is 1
+table OUTPUT field ben is T # includes number of OASI and DI beneficiaries
+table OUTPUT field dfr is T # includes OASI dollar benefit cost, t-f balance
+table OUTPUT field dfc is T # includes OASDI dollar benefit cost, t-f balance
+table OUTPUT field coh is F # no ECI-mode individual results
+
+# OASDI reform provisions: # higher OASDI payroll tax rates beginning in 2013
+#table TAXR_DI field ptax_rate is same thru 2012 and 2.2 for 2032
+      # gradually raise DI tax rate from 1.8% to 2.2% over 20 years
+table TAXR_RI field ptax_rate is same thru 2012 and 11.16 for 2032
+      # gradually raise DI tax rate from 10.6% to 12.2% over 20 years
+
+# mortality rate projection:
+#table POP field use_mrfile is T
+#table POP field mrfilename is mx.?????????????.txt
+      # above two lines activate use of custom mortality rate projection;
+      # comment out the two lines to use 2012TR intermediate-cost projection

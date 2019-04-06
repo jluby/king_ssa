@@ -1,0 +1,25 @@
+analysis.pdf (application/pdf) 202871 bytes.
+analysis.Rnw (text/plain; charset=US-ASCII) 21043 bytes.
+analysis_appendix.pdf (application/pdf) 304456 bytes.
+analysis_appendix.Rnw (text/plain; charset=US-ASCII) 44760 bytes.
+demog_loess_boot.dta (application/x-stata) 16528 bytes.
+demog_loess_ssa_boot.dta (application/x-stata) 16528 bytes.
+ex_ssa.dta (application/x-stata) 517908 bytes.
+hmd_fltper_1x1.dta (application/x-stata) 486584 bytes.
+hmd_mltper_1x1.dta (application/x-stata) 486584 bytes.
+hmd_population.dta (application/x-stata) 281534 bytes.
+KKS_JEP2015.zip (application/zip) 1891304 bytes.
+loess_boot.R (text/plain; charset=US-ASCII) 3850 bytes.
+Makefile (text/plain; charset=US-ASCII) 511 bytes.
+obs_ex.dta (application/x-stata) 16050 bytes.
+obs_tfr.dta (application/x-stata) 3170 bytes.
+README.pdf (application/pdf) 51483 bytes.
+ssa_expend.dta (application/x-stata) 3442 bytes.
+ssa_expend_forecasts.dta (application/x-stata) 1658 bytes.
+ssa_finance.RData (application/x-rlang-transport) 54536 bytes.
+ssa_immigration.RData (application/x-rlang-transport) 378 bytes.
+tfr_ssa.dta (application/x-stata) 20384 bytes.
+tf_balance_pred.dta (application/x-stata) 293714 bytes.
+tf_ratio_pred.dta (application/x-stata) 100214 bytes.
+unexpect_benif.R (text/plain; charset=US-ASCII) 2875 bytes.
+unexpect_benif.dta (application/x-stata) 2538 bytes.

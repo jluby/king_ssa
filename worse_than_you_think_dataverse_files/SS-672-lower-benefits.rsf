@@ -1,0 +1,29 @@
+## RUN.id 672
+## SSASIM CBA mode run: GENERIC lower OASI benefits reform beginning in 2013
+
+create ssasim run same as run 12 except:
+table RUN field n_test_yrs is 75
+table RUN field num_years is 82
+table RUN field scenarios is 1
+table OUTPUT field ben is T # includes number of OASI and DI beneficiaries
+table OUTPUT field dfr is T # includes OASI dollar benefit cost, t-f balance
+table OUTPUT field dfc is T # includes OASDI dollar benefit cost, t-f balance
+table OUTPUT field coh is F # no ECI-mode individual results
+table OUTPUT field bnd is T
+table OUTPUT field bnr is T
+
+# OASDI reform provisions: # lower OASI benefits beginning in 2013
+table BEND_RI field cola_offst is same thru 2012 and 0.0 for 2013
+table BEND_DI field cola_offst is same thru 2012 and 0.0 for 2013
+      # above two lines define COLA reform that lowers COLA by 0.3% per year
+table BEND_RI field initben_sf is same thru 2012 and 85.7 for 2032
+      # above line defines generic reduction in initial OASI benefits that
+      # is gradually phased in over twenty years beginning in 2013; the
+      # 2032 value of is calibrated to produce an actuarial balance of 1.694T in bal_t in the OASDI Trust Funds,
+      # which is what is produced by the SS-671-higher-taxes.rsf run
+
+# mortality rate projection:
+#table POP field use_mrfile is T
+#table POP field mrfilename is mx.?????????????.txt
+      # above two lines activate use of custom mortality rate projection;
+      # comment out the two lines to use 2012TR intermediate-cost projection

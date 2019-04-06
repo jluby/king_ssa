@@ -1,0 +1,17 @@
+analysis.pdf (application/pdf) 1425727 bytes.
+analysis.Rnw (text/plain; charset=US-ASCII) 20128 bytes.
+analysis_grayscale.pdf (application/pdf) 1427958 bytes.
+analysis_grayscale.Rnw (text/plain; charset=US-ASCII) 20412 bytes.
+geom_segment_plus.R (text/plain; charset=US-ASCII) 2711 bytes.
+hmd_fltper_1x1.dta (application/x-stata) 486584 bytes.
+hmd_mltper_1x1.dta (application/x-stata) 486584 bytes.
+KKS_PA2015.zip (application/zip) 12318901 bytes.
+lt.dta (application/x-stata) 30934510 bytes.
+Makefile (text/plain; charset=US-ASCII) 508 bytes.
+proposal_scoring.dta (application/x-stata) 10542 bytes.
+README.pdf (application/pdf) 50588 bytes.
+ssa_balance.dta (application/x-stata) 320390 bytes.
+ssa_ex.RData (application/x-rlang-transport) 59729 bytes.
+ssa_mx_2009.dta (application/x-stata) 353957 bytes.
+urod.dta (application/x-stata) 993 bytes.
+urod_arrows.dta (application/x-stata) 1552 bytes.

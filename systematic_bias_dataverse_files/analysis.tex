@@ -1,0 +1,114 @@
+\documentclass{article}
+\usepackage[sc]{mathpazo}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{verbose,tmargin=2.5cm,bmargin=2.5cm,lmargin=2.5cm,rmargin=2.5cm}
+\setcounter{secnumdepth}{2}
+\setcounter{tocdepth}{2}
+\usepackage{url}
+\usepackage[unicode=true,pdfusetitle,
+ bookmarks=true,bookmarksnumbered=true,bookmarksopen=true,bookmarksopenlevel=2,
+ breaklinks=true,pdfborder={0 0 1},backref=false, colorlinks=true]
+ {hyperref}
+\hypersetup{
+ pdfstartview={XYZ null null 1}}
+\usepackage{breakurl}
+\usepackage{pdfpages}
+\usepackage{graphicx}
+
+\usepackage{Sweave}
+\begin{document}
+\input{analysis-concordance}
+
+\begin{Schunk}
+\begin{Sinput}
+> # load libraries
+> library(knitr)
+> library(ggplot2)
+> library(reshape2)
+> library(grid)
+> library(gridExtra)
+> library(xtable)
+> library(haven)
+> library(tidyverse)
+> ##### set custom_font to FALSE unless have extrafont library and Minion Pro font installed
+> custom_font <- FALSE
+> # code for using Minion Pro font for figures
+> if(custom_font){
++ 	library(extrafont)
++ 	if("Minion Pro" %in% fonts()==FALSE){
++ 		warning("No Minion Pro font")
++ 		theme_set(theme_bw())
++ 		ff <- ""
++ 	} else {
++ 		theme_set(theme_bw(base_family="Minion Pro"))
++ 		ff <- "Minion Pro"
++ 	}
++ } else {
++ 	theme_set(theme_bw())
++ 	ff <- ""
++ }
+> # set global chunk options
+> options(replace.assign=TRUE,width=50)
+> opts_chunk$set(fig.path='figures/graphics-', fig.align='center', cache=FALSE, fig.show='hold', warning=FALSE, message=FALSE, results='asis')
+> # allow custom plots
+> knit_hooks$set(custom.plot = hook_plot_custom)
+> # Create figures subdirectory if it doesn't exist
+> if(!file.exists("figures")){
++ 	dir.create(file.path("figures"))
++ }
+\end{Sinput}
+\end{Schunk}
+
+
+\begin{Schunk}
+\begin{Sinput}
+> ### LOAD DATA
+> # Financial and demographic forecasts and errors 
+> tf.balance.pred <- read_dta("data/tf_balance_pred.dta")
+> tf.ratio.pred <- read_dta("data/tf_ratio_pred.dta")
+> ex.ssa <- read_dta("data/ex_ssa.dta")
+> tfr.ssa <- read_dta("data/tfr_ssa.dta")
+> # Observed demographic data (life expectancy)
+> obs.ex <- read_dta("data/observed/obs_ex.dta")
+> # Unexpected beneficiaries from underestimating life expectancy
+> ub <- read_dta("data/unexpect_benif.dta")
+> expend_obs <- read_dta("data/ssa_expend.dta")
+> expend_forecasts <- read_dta("data/ssa_expend_forecasts.dta")
+> # We will only look at demographic forecasts made for 1985 to 2010, every 5 years
+> main_years <- seq(1985,2010,5)
+> ex.use <- ex.ssa[ex.ssa$forecast_year %in% main_years,]
+> # get TRs that make these forecasts
+> TRs <- unique(ex.use$TR)
+\end{Sinput}
+\end{Schunk}
+
+
+\title{Systematic Bias and Nontransparency in US Social Security Administration Forecasts\\Replication of Figures}
+\author{Konstantin Kashin, Gary King, and Samir Soneji}
+\date{March 2015}
+\maketitle
+
+\tableofcontents
+\newpage
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% DEMOGRAPHY - Life Expectancy %%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Demographic Forecasts: Life Expectancy}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% Observed data         %%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Observed Life Expectancy}
+
+\begin{figure}[h!]
+\caption{Observed Period Life Expectancy. As
+    described in the text, ``period life expectancy'' for a year is a
+    single-number summary of all the age-specific mortality rates for
+    that same year and is interpreted as the average number of years a
+    person could expect to live if he or she experienced the mortality
+    rates of a given year over the course of their life.}\label{observed-bw}
