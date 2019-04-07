@@ -1,24 +1,16 @@
-\documentclass{article}
-\usepackage[sc]{mathpazo}
-\usepackage[T1]{fontenc}
-\usepackage{geometry}
-\geometry{verbose,tmargin=2.5cm,bmargin=2.5cm,lmargin=2.5cm,rmargin=2.5cm}
-\setcounter{secnumdepth}{2}
-\setcounter{tocdepth}{2}
-\usepackage{url}
-\usepackage[unicode=true,pdfusetitle,
- bookmarks=true,bookmarksnumbered=true,bookmarksopen=true,bookmarksopenlevel=2,
- breaklinks=true,pdfborder={0 0 1},backref=false, colorlinks=true]
- {hyperref}
-\hypersetup{
- pdfstartview={XYZ null null 1}}
-\usepackage{breakurl}
-\usepackage{pdfpages}
-\usepackage{graphicx}
+---
+title: Replication of 'Systematic Bias and Nontransparency in US Social Security Administration
+  Forecasts'
+author: "Jack Luby"
+date: "4/5/2019"
+output: html_document
+---
 
-\begin{document}
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
 
-<<setup, include=FALSE, cache=FALSE>>=
+```{r include = FALSE, cache = FALSE}
 # load libraries
 library(knitr)
 library(ggplot2)
@@ -26,6 +18,9 @@ library(reshape2)
 library(grid)
 library(gridExtra)
 library(xtable)
+library(haven)
+library(tidyverse)
+library(purrr)
 
 ##### set custom_font to FALSE unless have extrafont library and Minion Pro font installed
 custom_font <- FALSE
@@ -57,26 +52,43 @@ knit_hooks$set(custom.plot = hook_plot_custom)
 if(!file.exists("figures")){
 	dir.create(file.path("figures"))
 }
+```
 
+
+```{r inclue = FALSE, cache = FALSE}
 ### LOAD DATA
 # Financial and demographic forecasts and errors 
-load("data/ssa_finance.RData")
-load("data/ssa_demog.RData")
+tf.balance.pred <- read_dta("systematic_bias_dataverse_files/data/tf_balance_pred.dta")
+  colnames(tf.balance.pred) <- map_chr(1:ncol(tf.balance.pred), function(x) attr(tf.balance.pred[[x]], "label"))
+tf.ratio.pred <- read_dta("systematic_bias_dataverse_files/data/tf_ratio_pred.dta")
+  colnames(tf.ratio.pred) <- map_chr(1:ncol(tf.ratio.pred), function(x) attr(tf.ratio.pred[[x]], "label"))
+ex.ssa <- read_dta("systematic_bias_dataverse_files/data/ex_ssa.dta")
+  colnames(ex.ssa) <- map_chr(1:ncol(ex.ssa), function(x) attr(ex.ssa[[x]], "label"))
+tfr.ssa <- read_dta("systematic_bias_dataverse_files/data/tfr_ssa.dta")
+  colnames(tfr.ssa) <- map_chr(1:ncol(tfr.ssa), function(x) attr(tfr.ssa[[x]], "label"))
 
 # Observed demographic data (life expectancy)
-load("data/observed/obs.ex.RData")
+obs.ex <- read_dta("systematic_bias_dataverse_files/data/observed/obs_ex.dta")
+  colnames(obs.ex) <- map_chr(1:ncol(obs.ex), function(x) attr(obs.ex[[x]], "label"))
 
 # Unexpected beneficiaries from underestimating life expectancy
-load("data/unexpect_benif.RData")
-expend_obs <- read.csv("data/ssa_expend.csv")
-expend_forecasts <- read.csv("data/ssa_expend_forecasts.csv")
+ub <- read_dta("systematic_bias_dataverse_files/data/unexpect_benif.dta")
+  colnames(ub) <- map_chr(1:ncol(ub), function(x) attr(ub[[x]], "label"))
+expend_obs <- read_dta("systematic_bias_dataverse_files/data/ssa_expend.dta")
+  colnames(expend_obs) <- map_chr(1:ncol(expend_obs), function(x) attr(expend_obs[[x]], "label"))
+expend_forecasts <- read_dta("systematic_bias_dataverse_files/data/ssa_expend_forecasts.dta")
+  colnames(expend_forecasts) <- map_chr(1:ncol(expend_forecasts), function(x) attr(expend_forecasts[[x]], "label"))
+
+obs.ex <- obs.ex %>%
+  mutate(sex = case_when(sex == 2 ~ "Male",
+                         sex == 1 ~ "Female"))
 
 # We will only look at demographic forecasts made for 1985 to 2010, every 5 years
 main_years <- seq(1985,2010,5)
 ex.use <- ex.ssa[ex.ssa$forecast.year %in% main_years,]
 # get TRs that make these forecasts
 TRs <- unique(ex.use$TR)
-@
+```
 
 
 \title{Systematic Bias and Nontransparency in US Social Security Administration Forecasts\\Replication of Figures}
@@ -107,9 +119,12 @@ TRs <- unique(ex.use$TR)
     that same year and is interpreted as the average number of years a
     person could expect to live if he or she experienced the mortality
     rates of a given year over the course of their life.}\label{observed-bw}
-<<observed-bw,out.width='\\linewidth',custom.plot=TRUE, fig.keep='all', fig.ext='pdf',echo=FALSE>>=
+
+
+```{r observed-bw,out.width='\\linewidth',custom.plot=TRUE, fig.keep='all', fig.ext='pdf',echo=FALSE}
 # data frame of observed LE data (from HMD)
-obs.df <- melt(obs.ex[as.character(TRs),,,"HMD"])
+#obs.df <- melt(obs.ex[as.character(TRs)])
+obs.df <- obs.ex %>% select(year, sex, age, ex)
 colnames(obs.df) <- c("year","sex","age","ex")
 obs.df$type <- "Male Life Expectancy at Birth"
 obs.df[obs.df$age==65 & obs.df$sex=="Male",]$type <- "Male Life Expectancy at 65"
@@ -123,10 +138,15 @@ obs.df$type_order[obs.df$type=="Male Life Expectancy at 65"] <- 3
 obs.df$type_order[obs.df$type=="Female Life Expectancy at 65"] <- 4
 obs.df$type <- reorder(obs.df$type, obs.df$type_order)
 
+# Strangely, the dataset has two observations for each group for each year. These values differ and, further, are NA for several years. I don't know why. I think the melt() command above is how they got rid of these observations and got only years 1982- but I didn't get that to work
+obs.df <- obs.df[1:312,]
+obs.df <- obs.df %>% 
+  filter(year >= 1982)
+
 obs.plot <- ggplot(data=obs.df, aes(x=year, y=ex)) + geom_point(color="gray19") + scale_x_continuous("Year of Trustees Report") + scale_y_continuous("Observed Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black"))
 
 ggsave(filename='figures/graphics-observed-bw-1.pdf', plot=obs.plot, height=8, width=8)
-@
+```
 \end{figure}
 
 
@@ -142,17 +162,17 @@ ggsave(filename='figures/graphics-observed-bw-1.pdf', plot=obs.plot, height=8, w
     (females) and triangles (males) colored white when truth falls
     within SSA uncertainty intervals and colored black when the truth falls
     outside SSA uncertainty intervals.}\label{2010resid-bw}
-<<2010-resid-by-tr-bw,out.width='\\linewidth',custom.plot=TRUE, fig.keep='all', fig.ext='pdf',echo=FALSE>>=
+```{r 2010-resid-by-tr-bw,out.width='\\linewidth',custom.plot=TRUE, fig.keep='all', fig.ext='pdf',echo=FALSE}
 ex.use$agelabel <- "Life Expectancy at Birth"
 ex.use[ex.use$age==65,]$agelabel <- "Life Expectancy at 65"
 ex.use$agelabel <- factor(ex.use$agelabel, levels=c("Life Expectancy at Birth","Life Expectancy at 65"))
 
-resid2010 <- ggplot(data=ex.use[ex.use$forecast.year==2010,], aes(x=TR, y=hmd_residual)) + geom_path(aes(group=sex), color="gray19", alpha=0.5) + geom_hline(yintercept=0,linetype="solid",color="ivory4") + geom_point(size=4, aes(shape=interaction(sex,hmd_coverage),fill=hmd_coverage),color="gray19", alpha=0.9) + scale_x_continuous("Year of Trustees Report", limits=c(1980,2010)) + scale_y_continuous("Forecast Error (Years)", limits=c(-3,1.75)) + scale_shape_manual(values=c(19,17,21,24)) + scale_fill_manual(values=c("gray19","white"))  + facet_wrap(~agelabel) + theme(legend.position="none",strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black"))
+resid2010 <- ggplot(data=ex.use[ex.use$forecast.year==2010,], aes(x=TR, y=hmd_residual)) + geom_path(aes(group=sex), color="gray19", alpha=0.5) + geom_hline(yintercept=0,linetype="solid",color="ivory4") + geom_point(size=4, aes(shape=interaction(sex,hmd_coverage),fill=as.factor(hmd_coverage)),color="gray19", alpha=0.9) + scale_x_continuous("Year of Trustees Report", limits=c(1980,2010)) + scale_y_continuous("Forecast Error (Years)", limits=c(-3,1.75)) + scale_shape_manual(values=c(19,17,21,24)) + scale_fill_manual(values=c("gray19","white"))  + facet_wrap(~agelabel) + theme(legend.position="none",strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black"))
 resid2010.labeldf <- data.frame(agelabel=c("Life Expectancy at Birth","Life Expectancy at Birth","Life Expectancy at 65","Life Expectancy at 65"), sex=c("Male","Female","Male","Female"), x=rep(1982,4), y=c(-1.5,1,-2.2,1.5))
 resid2010 <- resid2010 + geom_text(data=resid2010.labeldf, aes(x=x,y=y,label=sex), color="gray19", family=ff) 
 
 ggsave(filename='figures/graphics-2010-resid-by-tr-bw-1.pdf', plot=resid2010, height=5, width=8)
-@
+```
 \end{figure}
 
 
@@ -161,13 +181,13 @@ ggsave(filename='figures/graphics-2010-resid-by-tr-bw-1.pdf', plot=resid2010, he
     (females) and triangles (males) colored white when truth falls
     within SSA uncertainty intervals and colored black when the truth falls
     outside SSA uncertainty intervals.}\label{2005resid-bw}
-<<2005-resid-by-tr-bw,out.width='\\linewidth',custom.plot=TRUE, fig.keep='all', fig.ext='pdf',echo=FALSE>>=
-resid2005 <- ggplot(data=ex.use[ex.use$forecast.year==2005,], aes(x=TR, y=hmd_residual)) + geom_path(aes(group=sex), color="gray19", alpha=0.5) + geom_hline(yintercept=0,linetype="solid",color="ivory4") + geom_point(size=4, aes(shape=interaction(sex,hmd_coverage),fill=hmd_coverage),color="gray19", alpha=0.9) + scale_x_continuous("Year of Trustees Report", limits=c(1980,2010)) + scale_y_continuous("Forecast Error (Years)", limits=c(-3,1.75)) + theme(legend.position="none",strip.background = element_rect(fill="snow1"),text=element_text(size=15, color="black")) + scale_shape_manual(values=c(19,17,21,24)) + scale_fill_manual(values=c("gray19","white")) + facet_wrap(~agelabel)
+```{r 2005-resid-by-tr-bw,out.width='\\linewidth',custom.plot=TRUE, fig.keep='all', fig.ext='pdf',echo=FALSE}
+resid2005 <- ggplot(data=ex.use[ex.use$forecast.year==2005,], aes(x=TR, y=hmd_residual)) + geom_path(aes(group=sex), color="gray19", alpha=0.5) + geom_hline(yintercept=0,linetype="solid",color="ivory4") + geom_point(size=4, aes(shape=interaction(sex,hmd_coverage),fill=as.factor(hmd_coverage)),color="gray19", alpha=0.9) + scale_x_continuous("Year of Trustees Report", limits=c(1980,2010)) + scale_y_continuous("Forecast Error (Years)", limits=c(-3,1.75)) + theme(legend.position="none",strip.background = element_rect(fill="snow1"),text=element_text(size=15, color="black")) + scale_shape_manual(values=c(19,17,21,24)) + scale_fill_manual(values=c("gray19","white")) + facet_wrap(~agelabel)
 resid2005.labeldf <- data.frame(agelabel=c("Life Expectancy at Birth","Life Expectancy at Birth","Life Expectancy at 65","Life Expectancy at 65"), sex=c("Male","Female","Male","Female"), x=rep(1982,4), y=c(-1,0.75,-1.5,0.75))
 resid2005 <- resid2005 + geom_text(data= resid2005.labeldf, aes(x=x,y=y,label=sex), color="gray19", family=ff) 
 
 ggsave(filename='figures/graphics-2005-resid-by-tr-bw-1.pdf', plot=resid2005, height=5, width=8)
-@
+```
 \end{figure}
 
 
@@ -186,7 +206,7 @@ ggsave(filename='figures/graphics-2005-resid-by-tr-bw-1.pdf', plot=resid2005, he
     interval. Contemporaneous forecast error is possible because of
     the time lag (typically three to four years) in finalizing
     mortality data.}\label{coverage-bw}
-<<ci-coverage-bw,out.width='\\linewidth',custom.plot=TRUE, fig.keep='all', fig.ext='pdf',echo=FALSE>>=
+```{r ci-coverage-bw,out.width='\\linewidth',custom.plot=TRUE, fig.keep='all', fig.ext='pdf',echo=FALSE}
 
 # create data frame
 ex.coverage <- ex.use[,c("TR","forecast.year","hmd_coverage")]
@@ -213,7 +233,7 @@ coverage.df$type <- reorder(coverage.df$type, coverage.df$type_order)
 coverage.plot <- ggplot(data=coverage.df, aes(x=TR, y=forecast.year, fill=as.factor(coverage))) + geom_tile(color="black") + scale_x_continuous("Year of Trustees Report") + scale_y_continuous("Year Forecast") + scale_fill_manual("CI Covers Truth?",values=c("gray30","white"), na.value="gray90") + theme(legend.position="none", strip.background = element_rect(fill="snow1"),text=element_text(size=15, color="black"))  + facet_wrap(~type, nrow=3, ncol=) + expand_limits(x=1980) + geom_segment(aes(x=1983.5, xend=1984.5, y=2002.5, yend=2007.5), color="gray50", size=0.1) + geom_segment(aes(x= 1984.5, xend= 1983.5, y= 2002.5, yend= 2007.5), color="gray50", size=0.1) + geom_segment(aes(x=1984.5, xend=1985.5, y=2002.5, yend=2007.5), color="gray50", size=0.1) + geom_segment(aes(x= 1985.5, xend= 1984.5, y= 2002.5, yend= 2007.5), color="gray50", size=0.1) + geom_segment(aes(x=1985.5, xend=1986.5, y=2002.5, yend=2007.5), color="gray50", size=0.1) + geom_segment(aes(x= 1986.5, xend= 1985.5, y= 2002.5, yend= 2007.5), color="gray50", size=0.1) + geom_segment(aes(x=1986.5, xend=1987.5, y=2002.5, yend=2007.5), color="gray50", size=0.1) + geom_segment(aes(x= 1987.5, xend= 1986.5, y= 2002.5, yend= 2007.5), color="gray50", size=0.1)
 
 ggsave(filename='figures/graphics-ci-coverage-bw-1.pdf', plot=coverage.plot, height=5, width=8)
-@
+```
 \end{figure}
 
 
@@ -242,25 +262,40 @@ ggsave(filename='figures/graphics-ci-coverage-bw-1.pdf', plot=coverage.plot, hei
     in total Social Security expenditures due to
     mortality forecasting errors (dashed lines). Finally, we represent
     the Great Recession as a vertical grey region.}\label{unanticip-costs-bw}
-<<unanticip_costs-bw,out.width='\\linewidth',custom.plot=TRUE, fig.keep='all', fig.ext='pdf',echo=FALSE>>=
-
+```{r unanticip_costs-bw,out.width='\\linewidth',custom.plot=TRUE, fig.keep='all', fig.ext='pdf',echo=FALSE}
 # calculate average annual OASI benefit payments
-avg.benefit.payment <- expend_obs$oasi_benif_payments*1000000/expend_obs$oasi_total_benif
+avg.benefit.payment <- expend_obs %>% 
+  mutate(payment = oasi_benif_payments*1000000/oasi_total_benif) %>% 
+  select(year, payment)
+colnames(avg.benefit.payment)[1] <- 'TR'
  
 # convert to 2010 constant dollars
-avg.benefit.payment <- avg.benefit.payment*expend_obs[expend_obs$year==2010,"CPI.U"]/expend_obs$CPI.U
+CPI_2010 <- as.numeric(expend_obs[expend_obs$year==2010,"CPI.U"])
+expend_obs <- expend_obs %>% 
+  mutate(correction_to_2010 = (CPI_2010)/CPI.U)
+avg.benefit.payment$payment <- avg.benefit.payment$payment*expend_obs$correction_to_2010
 
 # calculate unanticipated costs due to demography
-unanticip_cost <- t(apply(ub,1, function(x) x*avg.benefit.payment[1:11]))
-unanticip_cost_df <- melt(unanticip_cost)
+unanticip_cost <- right_join(ub, avg.benefit.payment[1:11,], by = 'TR')
+unanticip_cost_df <- unanticip_cost %>% 
+  mutate(cost = unexpect_benif*payment) %>% 
+  select(TR, forecast.year, cost)
+# unanticip_cost <- t(apply(ub,1, function(x) x*avg.benefit.payment$payment[1:11]))
+# unanticip_cost_df <- melt(unanticip_cost)
 colnames(unanticip_cost_df) <- c("TR","year.forecast","cost")
 unanticip_cost_df$cost <- unanticip_cost_df$cost/1000000000
+
+expend_obs <- expend_obs %>% 
+  select(-correction_to_2010)
 
 # merge forecast expenditures with actual expenditures
 expend_forecasts <- merge(expend_forecasts,expend_obs, by.x="year.forecast",by.y="year",all.x=TRUE)
 
+expend_forecasts <- expend_forecasts %>% 
+  mutate(correction_to_2010 = (CPI_2010)/CPI.U)
+
 # calculate residuals in total forecast expenditures and convert to constant 2010 dollars
-expend_forecasts$resid <- (expend_forecasts$oasdi.total.cost - expend_forecasts$oasdi_total_expend/1000)* expend_obs[expend_obs$year==2010,"CPI.U"]/expend_forecasts$CPI.U
+expend_forecasts$resid <- (expend_forecasts$oasdi.total.cost - expend_forecasts$oasdi_total_expend/1000)* expend_forecasts$correction_to_2010
 
 # merge total unanticipated costs and unanticipated costs to demography into one data frame
 unanticip_cost_df <- merge(unanticip_cost_df, expend_forecasts[,c("TR","year.forecast","resid")], by=c("TR","year.forecast"), all.x=T)
@@ -271,7 +306,7 @@ label_df <- data.frame(TR=c(2001,2001), x=c(2005,2005), y=c(20,-2), label=c("Tot
 unanticip_plot <- ggplot(data=unanticip_cost_df[unanticip_cost_df$TR>2000 & unanticip_cost_df$TR<2009,],aes(year.forecast,cost)) + geom_rect(aes(xmin=2008, xmax=2009.5, ymin=-Inf, ymax=Inf), fill="gray80") + geom_point(size=2,color="black") + geom_line(size=0.8,color="black", linetype="dotted") + facet_wrap(~TR, nrow=2) + scale_y_continuous("Errors in Total Expenditures (Billions of 2010 Dollars)") + scale_x_continuous("Year Forecast", limits=c(2001,2010), breaks=c(2002,2004,2006,2008,2010)) + geom_line(aes(year.forecast, abs(resid)),color="black",size=0.8) + geom_point(aes(year.forecast, abs(resid)),color="black",size=2) + theme(strip.background = element_rect(fill="snow1"),axis.text.x=element_text(angle=45),text=element_text(size=15, color="black")) + geom_text(data= label_df, aes(x=x, y=y, label=label), size=4.5, family=ff)
 
 ggsave(filename='figures/graphics-unanticip_costs-bw-1.pdf', plot=unanticip_plot, height=8, width=8)
-@
+```
 \end{figure}
 
 
@@ -291,7 +326,7 @@ ggsave(filename='figures/graphics-unanticip_costs-bw-1.pdf', plot=unanticip_plot
     are overestimates if positive and underestimates if
     negative. Points are white if the error is within SSA's
     uncertainty interval and black otherwise.}\label{cost-by-tr-bw}
-<<cost_resid_lattice-bw,fig.ext='pdf',custom.plot=TRUE,out.width='\\linewidth',fig.keep='all', echo=FALSE>>=
+```{r cost_resid_lattice-bw,fig.ext='pdf',custom.plot=TRUE,out.width='\\linewidth',fig.keep='all', echo=FALSE}
 tf.balance.pred$cost.residual <- tf.balance.pred$cost.rate - tf.balance.pred$cost.truth
 tf.balance.pred$years.from.forecast <- tf.balance.pred$forecast.year-tf.balance.pred$TR
 cost.coverage <- tf.balance.pred$cost.lower <= tf.balance.pred$cost.truth & tf.balance.pred$cost.upper >= tf.balance.pred$cost.truth
@@ -300,7 +335,7 @@ tf.balance.pred$cost.coverage <- cost.coverage
 cost_plot <- ggplot(tf.balance.pred[tf.balance.pred$forecast.year<=2012 & tf.balance.pred$years.from.forecast<=10 & tf.balance.pred$years.from.forecast>0,], aes(TR,cost.residual)) + geom_hline(yintercept=0,linetype="dotted",color="ivory4")  + geom_smooth(stat="smooth", method="loess",color="black", span=0.9, fill="grey") + geom_point(size=2, color="gray20", alpha=0.75) + geom_point(aes(color=cost.coverage),na.rm=FALSE, size=1.5)  + scale_x_continuous("Year of Trustees Report") + scale_y_continuous("Forecast Error (Percentage Points)") + facet_wrap(~years.from.forecast, nrow=2, ncol=5) + theme(legend.position="none", strip.background = element_rect(fill="snow1"), axis.text.x=element_text(angle=45),text=element_text(size=15, color="black")) + scale_color_manual(values=c("gray20","white"),na.value="darkgrey")
 
 ggsave(filename='figures/graphics-cost_resid_lattice-bw-1.pdf', plot=cost_plot, height=8, width=8)
-@
+```
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -317,7 +352,7 @@ ggsave(filename='figures/graphics-cost_resid_lattice-bw-1.pdf', plot=cost_plot, 
     Fund assets; negative errors underestimate them. Points are white
     if the error is within SSA's uncertainty interval and black
     otherwise.}\label{balance-by-tr-bw}
-<<balance_resid_lattice-bw,fig.ext='pdf',custom.plot=TRUE,out.width='\\linewidth',fig.keep='all', echo=FALSE>>=
+```{r balance_resid_lattice-bw,fig.ext='pdf',custom.plot=TRUE,out.width='\\linewidth',fig.keep='all', echo=FALSE}
 tf.balance.pred$balance.residual <- tf.balance.pred$balance - tf.balance.pred$balance.truth
 tf.balance.pred$years.from.forecast <- tf.balance.pred$forecast.year-tf.balance.pred$TR
 balance.coverage <- tf.balance.pred$balance.lower <= tf.balance.pred$balance.truth & tf.balance.pred$balance.upper >= tf.balance.pred$balance.truth
@@ -326,7 +361,7 @@ tf.balance.pred$balance.coverage <- balance.coverage
 balance_plot <- ggplot(tf.balance.pred[tf.balance.pred$forecast.year<=2012 & tf.balance.pred$years.from.forecast<=10 & tf.balance.pred$years.from.forecast>=1,], aes(TR,balance.residual)) + geom_hline(yintercept=0,linetype="dotted",color="ivory4")  + geom_smooth(stat="smooth", method="loess",color="black", span=0.9, fill="grey") + geom_point(size=2, color="gray20", alpha=0.75) + geom_point(aes(color= balance.coverage),na.rm=FALSE, size=1.5) + scale_x_continuous("Year of Trustees Report") + scale_y_continuous("Forecast Error (Percentage Points)") + facet_wrap(~years.from.forecast, nrow=2, ncol=5) + theme(legend.position="none", strip.background = element_rect(fill="snow1"), axis.text.x=element_text(angle=45),text=element_text(size=15, color="black")) + scale_color_manual(values=c("gray20","white"),na.value="darkgrey")
 
 ggsave(filename='figures/graphics-balance_resid_lattice-bw-1.pdf', plot=balance_plot, height=8, width=8)
-@
+```
 \end{figure}
 
 
@@ -345,7 +380,7 @@ ggsave(filename='figures/graphics-balance_resid_lattice-bw-1.pdf', plot=balance_
     Positive errors overestimate Trust Fund assets; negative errors
     underestimate them. Points are white if 3the error is within SSA's
     uncertainty interval and black otherwise.}\label{ratio-by-tr-bw}
-<<ratio_resid_lattice-bw,fig.ext='pdf',custom.plot=TRUE,out.width='\\linewidth',fig.keep='all', echo=FALSE>>=
+```{r ratio_resid_lattice-bw,fig.ext='pdf',custom.plot=TRUE,out.width='\\linewidth',fig.keep='all', echo=FALSE}
 tf.ratio.pred$residual <- tf.ratio.pred$tfratio - tf.ratio.pred$tfratio.truth
 tf.ratio.pred <- tf.ratio.pred[order(tf.ratio.pred$TR, tf.ratio.pred$forecast.year),]
 tf.ratio.pred$years.from.forecast <- tf.ratio.pred$forecast.year-tf.ratio.pred$TR
@@ -354,7 +389,7 @@ tf.ratio.pred$coverage <- tf.ratio.pred$tfratio.lower <= tf.ratio.pred$tfratio.t
 tfratio_plot <- ggplot(tf.ratio.pred[tf.ratio.pred$forecast.year<=2012 & tf.ratio.pred$years.from.forecast<=10 & tf.ratio.pred$years.from.forecast>=1,], aes(TR,residual)) + geom_hline(yintercept=0,linetype="dotted",color="ivory4")  + geom_smooth(stat="smooth", method="loess",color="black", span=0.9, fill="grey") + geom_point(size=2, color="gray20", alpha=0.75) + geom_point(aes(color=coverage),na.rm=FALSE, size=1.5) + scale_x_continuous("Year of Trustees Report") + scale_y_continuous("Forecast Error (Percentage Points)") + facet_wrap(~years.from.forecast, nrow=2) + theme(legend.position="none", strip.background = element_rect(fill="snow1"), axis.text.x=element_text(angle=45),text=element_text(size=15, color="black"))  + scale_color_manual(values=c("gray20","white"),na.value="darkgrey")
 
 ggsave(filename='figures/graphics-ratio_resid_lattice-bw-1.pdf', plot=tfratio_plot, height=8, width=8)
-@
+```
 \end{figure}
 
 
@@ -362,3 +397,6 @@ ggsave(filename='figures/graphics-ratio_resid_lattice-bw-1.pdf', plot=tfratio_pl
 
 
 \end{document}
+
+
+
