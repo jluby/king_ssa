@@ -6,7 +6,7 @@ geom_segment_plus <- function (mapping = NULL, data = NULL, stat = "identity",
     position = position, arrow = arrow, lineend = lineend, na.rm = na.rm, ...)
 }
  
-GeomSegmentPlus <- proto(ggplot2:::Geom, {
+GeomSegmentPlus <- ggproto(ggplot2:::Geom, expr = {
   objname <- "segmentplus"
  
   draw <- function(., data, scales, coordinates, arrow = NULL,

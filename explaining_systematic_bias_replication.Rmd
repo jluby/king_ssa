@@ -1,0 +1,441 @@
+---
+title: Replication of ‘Explaining Systematic Bias and Nontransparency in US Social
+  Security Administration Forecasts'
+author: "Jack Luby"
+date: "4/13/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+\documentclass{article}
+\usepackage[sc]{mathpazo}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{verbose,tmargin=2.5cm,bmargin=2.5cm,lmargin=2.5cm,rmargin=2.5cm}
+\setcounter{secnumdepth}{2}
+\setcounter{tocdepth}{2}
+\usepackage{url}
+\usepackage[unicode=true,pdfusetitle,
+ bookmarks=true,bookmarksnumbered=true,bookmarksopen=true,bookmarksopenlevel=2,
+ breaklinks=true,pdfborder={0 0 1},backref=false, colorlinks=true]
+ {hyperref}
+\hypersetup{pdfstartview={XYZ null null 1}}
+\usepackage{breakurl}
+\usepackage{pdfpages}
+\usepackage{graphicx}
+
+\begin{document}
+
+```{r load, include=FALSE, cache=FALSE}
+# load libraries
+library(knitr)
+library(ggplot2)
+library(reshape2)
+library(dplyr)
+library(grid)
+library(gridExtra)
+library(haven)
+library(purrr)
+
+# load helper function
+source("explaining_systematic_bias_dataverse_files/helpers/geom_segment_plus.R")
+
+##### set custom_font to FALSE unless have extrafont library and Minion Pro font installed
+custom_font <- FALSE
+
+# code for using Minion Pro font for figures
+if(custom_font){
+	library(extrafont)
+	if("Minion Pro" %in% fonts()==FALSE){
+		warning("No Minion Pro font")
+		theme_set(theme_bw())
+		ff <- ""
+	} else {
+		theme_set(theme_bw(base_family="Minion Pro"))
+		ff <- "Minion Pro"
+	}
+} else {
+	theme_set(theme_bw())
+	ff <- ""
+}
+
+if(!file.exists("figures")){
+	dir.create(file.path("figures"))
+}
+
+# Create figures subdirectory if it doesn't exist
+if(!file.exists("figures/explaining")){
+	dir.create(file.path("figures/explaining"))
+}
+
+# set global chunk options
+opts_chunk$set(fig.path='figures/explaining/graphics-', fig.align='center', cache=FALSE, fig.show='hold', warning=FALSE, message=FALSE, results='asis')
+
+# allow custom plots
+knit_hooks$set(custom.plot = hook_plot_custom)
+
+### LOAD DATA
+# Demographic forecasts and errors 
+load("explaining_systematic_bias_dataverse_files/data/ssa_ex.RData")
+
+# SSA array of mortality rates by cause
+ssa.mx.2009.array <- read_dta("explaining_systematic_bias_dataverse_files/data/ssa_mx_2009.dta")
+
+# Ultimate rates of decline
+urod.df <- read_dta("explaining_systematic_bias_dataverse_files/data/urod.dta")
+  colnames(urod.df) <- map_chr(1:ncol(urod.df), function(x) attr(urod.df[[x]], "label"))
+
+arrow.df <- read_dta("explaining_systematic_bias_dataverse_files/data/urod_arrows.dta")
+  colnames(arrow.df) <- map_chr(1:ncol(arrow.df), function(x) attr(arrow.df[[x]], "label"))
+
+
+# Load life tables from HMD
+flt <- read_dta("explaining_systematic_bias_dataverse_files/data/hmd_fltper_1x1.dta")
+mlt <- read_dta("explaining_systematic_bias_dataverse_files/data/hmd_mltper_1x1.dta")
+flt$Sex <- "Female"
+mlt$Sex <- "Male"
+lt_us <- rbind(flt, mlt)
+gender.order <- rep(1,nrow(lt_us))
+gender.order[lt_us$Sex=="Female"] <- 2
+lt_us$Sex <- reorder(lt_us$Sex,gender.order)
+
+# set Age 110+ to 110 # Seems like this is unnecessary
+# lt_us[lt_us$Age=="110+",]$Age <- "110"
+# set Age to integer
+lt_us$Age <- as.integer(lt_us$Age)
+
+# Load life tables across multiple countries
+lt <- read_dta("explaining_systematic_bias_dataverse_files/data/lt.dta")
+  colnames(lt) <- map_chr(1:ncol(lt), function(x) attr(lt[[x]], "label"))
+
+# Load policy proposals
+proposals <- read_dta("explaining_systematic_bias_dataverse_files/data/proposal_scoring.dta")
+  colnames(proposals) <- map_chr(1:ncol(proposals), function(x) attr(proposals[[x]], "label"))
+                                 
+# Finance errors
+tf.balance.pred <- read_dta("explaining_systematic_bias_dataverse_files/data/ssa_balance.dta")
+  colnames(tf.balance.pred) <- map_chr(1:ncol(tf.balance.pred), function(x) attr(tf.balance.pred[[x]], "label"))
+```
+
+
+\title{Explaining Systematic Bias and Nontransparency in US Social Security Administration Forecasts\\Replication of Figures}
+\author{Konstantin Kashin, Gary King, and Samir Soneji}
+\date{March 2015}
+\maketitle
+
+\tableofcontents
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%% Observed Conditional Probabilities of Death  
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Observed Conditional Probabilities of Death (HMD)}
+
+\begin{figure}[h!]
+\caption{Time Profile of Conditional Probabilities of Death}\label{hmd-qx-time}
+```{r hmd-qx-time,out.width='\\linewidth',custom.plot=TRUE, fig.keep='all', fig.ext='pdf',echo=FALSE}
+qx_time <- ggplot(lt_us[lt_us$Age<110,], aes(x=Year, y=log(qx), color=Age, group=Age)) + geom_line() + scale_x_continuous("Year", limits=c(1980,2010)) + scale_y_continuous("Conditional Probability of Death (Log Scale)", breaks=log(c(0.0005,0.005, 0.05, 0.5)), label=paste(c(0.0005,0.005, 0.05, 0.5)*100,"%", sep="")) + facet_wrap(~Sex) + theme(strip.background = element_rect(fill="snow1")) + scale_color_gradientn("Age",colours=rainbow(7), breaks=seq(0,110,20)) + theme(text=element_text(size=15, color="black"))
+
+ggsave(filename='figures/explaining/graphics-hmd-qx-time-1.pdf', plot=qx_time, height=5, width=8)
+```
+\end{figure}
+
+
+\begin{figure}[h!]
+\caption{Age Profile of Conditional Probabilities of Death}\label{hmd-qx-age}
+```{r hmd-qx-age,out.width='\\linewidth',custom.plot=TRUE, fig.keep='all', fig.ext='pdf',echo=FALSE}
+qx_age <- ggplot(lt_us[lt_us$Year>=1980 & lt_us$Age<110,], aes(x=Age, y=log(qx), color=Year, group=Year)) + geom_line()  + scale_x_continuous("Age") + scale_y_continuous("Conditional Probability of Death (Log Scale)",breaks=log(c(0.0005,0.005, 0.05, 0.5)), label=paste(c(0.0005,0.005, 0.05, 0.5)*100,"%", sep="")) + facet_wrap(~Sex) + theme(strip.background = element_rect(fill="snow1")) + scale_color_gradientn("Year",colours=rainbow(7), breaks=seq(1980,2010,10)) + theme(text=element_text(size=15, color="black"))
+
+ggsave(filename='figures/explaining/graphics-hmd-qx-age-1.pdf', plot=qx_age, height=5, width=8)
+```
+\end{figure}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%% Conditional probabilities of death across multiple countries 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\clearpage
+
+
+\begin{figure}[h!]
+\caption{Age Profiles of Conditional Probabilities of Death}\label{ageprofiles}
+```{r ageprofiles,out.width='\\linewidth',custom.plot=TRUE, fig.keep='all', fig.ext='pdf',echo=FALSE}
+
+qx_age_countries <- ggplot(lt, aes(x=Age, y=log.qx, color=Year, group=Year)) + geom_line() + scale_x_continuous("Age", breaks=seq(0,100,25)) + scale_y_continuous("Conditional Probability of Death (Log Scale)",breaks=log(c(0.0005,0.005, 0.05, 0.5)), label=paste(c(0.0005,0.005, 0.05, 0.5)*100,"%", sep="")) + facet_wrap(~country) + theme(strip.background = element_rect(fill="snow1")) + theme(text=element_text(size=14, color="black"), legend.position=c(0.8, 0.05), legend.direction="horizontal", legend.text=element_text(angle=45), legend.title.align=1)
+
+ggsave(filename='figures/explaining/graphics-ageprofiles-1.pdf', plot=qx_age_countries, height=6, width=8)
+```
+\end{figure}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%% Rates of change in conditional probabilities of death
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\clearpage
+
+\begin{figure}[h!]
+\caption{Changes in Log-Mortality over Successive 10-Year Windows. Each line is an age group, with the thickness of the line drawn proportional to the number of deaths in that age group.}\label{ratechange}
+```{r ratechange,out.width='\\linewidth',custom.plot=TRUE, fig.keep='all', fig.ext='pdf',echo=FALSE}
+
+year.select <- 1970:2010
+ages <- 0:100
+sexes <- c("Male","Female")
+
+# setup blank array
+rates_of_change <- array(NA,dim=c(length(ages),length(year.select),length(sexes)),dimnames=list(ages,year.select,sexes))
+
+# calculate change in qx for 10-year window
+for (a in 1:length(ages)) {
+  for (s in 1:length(sexes)) {
+    for (y in 1:length(year.select)) {
+      qx <- subset(lt_us,Age==ages[a] & Year %in% c((year.select[y]-9):year.select[y]) & Sex==sexes[s])$qx
+      year <- 1:10
+      rates_of_change[a,y,s] <- lm(log(qx) ~ year)$coef[2]
+    }}}
+
+# melt array
+rates_of_change_df <- melt(rates_of_change)
+colnames(rates_of_change_df) <- c("Age","Year","Sex","Change")
+
+# add weights that correspond to prop of deaths occuring in that age in 2010 (separate for each gender)
+lt_us_2010 <- filter(lt_us, Year==2010 & Age %in% ages)
+
+lt_us_2010 <- lt_us_2010 %>%
+              group_by(Sex) %>%
+			  mutate(Weight=dx/sum(dx))
+
+rates_of_change_df$Weight <- NA
+
+# Repetitions used in base code created list.
+# Had to instead create my own list and use function right_join() which is FAR better
+female <- lt_us_2010 %>% 
+  filter(Sex == "Female") %>% 
+  select("Weight", "Age")
+
+male <- lt_us_2010 %>% 
+  filter(Sex == "Male") %>% 
+  select("Weight", "Age")
+
+bind <- rbind(female, male)
+
+rates_of_change_df <- right_join(rates_of_change_df, bind)
+
+# ages to plot
+age.select <- seq(65,95,10)
+
+# dataframe to plot labels
+label_df <- rates_of_change_df[rates_of_change_df$Age %in% age.select,] %>%
+	group_by(Age, Sex) %>%
+	summarize(y=last(Change))
+label_df$x <- 2012
+
+# reorder gender
+gender.order <- rep(1,nrow(rates_of_change_df))
+gender.order[rates_of_change_df$Sex=="Female"] <- 2
+rates_of_change_df$Sex <- reorder(rates_of_change_df$Sex,gender.order)
+
+rate_plot <- ggplot(rates_of_change_df[rates_of_change_df$Age %in% age.select,], aes(x=Year, y=Change, color=as.factor(Age), group=Age)) + geom_rect(xmin=2000, xmax=2015, ymin=-Inf, ymax=Inf, color=NA, fill="ivory2", alpha=0.5) + facet_wrap(~Sex) + geom_line(aes(size=Weight/2)) + scale_y_continuous("Change in Log-Mortality over 10 Year Window") + scale_x_continuous("Final Year of 10-Year Window") + scale_color_discrete("Age", guide=F) + geom_text(data=label_df, aes(x=x, y=y, label=Age), show.legend=FALSE, family=ff) + theme(text=element_text(size=15, color="black"), strip.background = element_rect(fill="snow1")) + scale_size_continuous(guide=F, range=c(0.5,2))
+
+ggsave(filename='figures/explaining/graphics-ratechange-1.pdf', plot=rate_plot, height=8, width=8)
+```
+\end{figure}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%% Problems with Cause-Specific Mortality Forecasts  
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\clearpage
+\section{Problems with Cause-Specific Mortality Forecasts}
+
+
+\begin{figure}[h!]
+\caption{Selected Examples of Problems with SSA's Qualitative Parameter Selection in Cause-Specific Mortality Forecasts}\label{mx-problems}
+```{r mx-problems,out.width='\\linewidth',custom.plot=TRUE, fig.keep='all', fig.ext='pdf',echo=FALSE}
+# df <- melt(ssa.mx.2009.array[c("80","85"),,"male","diabetes"])
+df <- ssa.mx.2009.array %>% 
+  filter(age %in% c(80, 85),
+         sex == 2,
+         cause == 2) %>% 
+  select(age, year, mx)
+# colnames(df) <- c("age","year","mx")
+df$observed <- 1
+df$observed[df$year>2005] <- 0
+df$age <- as.factor(df$age)
+
+plotLabels <- data.frame(x=c(2075,2075), y=c(300,440), age=as.factor(c(80,85)), label=c("Ages 80-84", "Ages 85-89"))
+ 
+g1 <- ggplot(df[df$observed==1,], aes(x=year, y=mx, group=age, color=age)) + geom_point() + geom_line(data=df[df$observed==0,])  + geom_vline(xintercept=2005.5, linetype="dashed", color="darkgrey") + scale_x_continuous("Year") + scale_y_continuous("Death Rate (per 100,000)") + scale_color_manual(values=c("coral","steelblue")) + theme(legend.position="none",text=element_text(size=15, color="black"), plot.title = element_text(size = rel(1))) + geom_text(data=plotLabels, aes(x=x,y=y,group=age,color=age,label=label), family=ff) + ggtitle("Diabetes Death Rate, Males")
+
+
+
+# df <- melt(ssa.mx.2009.array[c("80","85"),,"female","cancer"])
+df <- ssa.mx.2009.array %>% 
+  filter(age %in% c(80, 85),
+         sex == 1,
+         cause == 1) %>% 
+  select(age, year, mx)
+# colnames(df) <- c("age","year","mx")
+df$observed <- 1
+df$observed[df$year>2005] <- 0
+df$age <- as.factor(df$age)
+
+plotLabels <- data.frame(x=c(2075,2075), y=c(860,1275), age=as.factor(c(80,85)), label=c("Ages 80-84", "Ages 85-89"))
+ 
+g2 <- ggplot(df[df$observed==1,], aes(x=year, y=mx, group=age, color=age)) + geom_point() + geom_line(data=df[df$observed==0,]) + geom_vline(xintercept=2005.5, linetype="dashed", color="darkgrey") + scale_x_continuous("Year") + scale_y_continuous("Death Rate (per 100,000)") + scale_color_manual(values=c("coral","steelblue")) + theme(legend.position="none",text=element_text(size=15, color="black"), plot.title = element_text(size = rel(1))) + geom_text(data=plotLabels, aes(x=x,y=y,group=age,color=age,label=label), family=ff) + ggtitle("Cancer Death Rate, Females")
+
+
+
+# df <- melt(ssa.mx.2009.array[c("45","50"),,"male","heart"])
+df <- ssa.mx.2009.array %>% 
+  filter(age %in% c(45, 50),
+         sex == 2,
+         cause == 3) %>% 
+  select(age, year, mx)
+# colnames(df) <- c("age","year","mx")
+df$observed <- 1
+df$observed[df$year>2005] <- 0
+df$age <- as.factor(df$age)
+
+plotLabels <- data.frame(x=c(2030,2030), y=c(30,160), age=as.factor(c(45,50)), label=c("Ages 45-49", "Ages 50-54"))
+ 
+g3 <- ggplot(df[df$observed==1,], aes(x=year, y=mx, group=age, color=age)) + geom_point() + geom_line(data=df[df$observed==0,]) + geom_vline(xintercept=2005.5, linetype="dashed", color="darkgrey") + scale_x_continuous("Year") + scale_y_continuous("Death Rate (per 100,000)") + scale_color_manual(values=c("coral","steelblue")) + theme(legend.position="none",text=element_text(size=15, color="black"), plot.title = element_text(size = rel(1))) + geom_text(data=plotLabels, aes(x=x,y=y,group=age,color=age,label=label), family=ff) + ggtitle("Heart Disease Death Rate, Males")
+
+
+# df <- melt(ssa.mx.2009.array[,as.character(seq(2050,2100,10)),"male","heart"])
+df <- ssa.mx.2009.array %>% 
+  filter(year %in% as.character(seq(2050,2100,10)),
+         sex == 2,
+         cause == 3) %>% 
+  select(age, year, mx)
+# colnames(df) <- c("age","year","mx")
+df$year <- as.factor(df$year)
+
+g4 <- ggplot(df, aes(x=age, y=log(mx), group=year, color=year)) + geom_line() + scale_y_continuous("Death Rate (Log)") + theme(text=element_text(size=15, color="black")) + scale_x_continuous("Age") + ggtitle("Heart Disease Death Rate, Males") + theme(legend.position = c(.15, .70), plot.title = element_text(size = rel(1))) + scale_color_discrete("Year")  
+
+
+pdf(file='figures/explaining/graphics-mx-problems-1.pdf',height=8,width=8)
+grid.arrange(g1,g2,g3,g4,nrow=2,ncol=2)
+graphics.off()
+```
+\end{figure}
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%% Residuals of Short-run Forecasts of Life Expectancy
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\clearpage
+\section{Residuals of Short-run Forecasts of Life Expectancy}
+
+
+\begin{figure}[h!]
+\caption{Residuals of Short-run Forecasts of Life Expectancy. Solid line represents residuals based on SSA's intermediate cost scenario forecasts. The shaded region represents the interval formed by SSA's low and high cost scenario forecasts.}\label{ex-shortrun}
+```{r ex-shortrun,out.width='\\linewidth',custom.plot=TRUE, fig.keep='all', fig.ext='pdf',echo=FALSE}
+ex.ssa$distance <- ex.ssa$forecast.year - ex.ssa$TR
+ex.ssa$high_resid <- ex.ssa$upper - ex.ssa$hmd_observed
+ex.ssa$low_resid <- ex.ssa$lower - ex.ssa$hmd_observed
+gender.order <- rep(1,nrow(ex.ssa))
+gender.order[ex.ssa$sex=="Female"] <- 2
+ex.ssa$sex <- reorder(ex.ssa$sex,gender.order)
+
+residuals_plot <- ggplot(ex.ssa[ex.ssa$distance <=5 & ex.ssa$distance>=1 & ex.ssa$forecast.year%%5==0 & ex.ssa$age==65,], aes(x=TR,y= hmd_residual))  + geom_hline(yintercept=0, color="darkgray", linetype="dashed") + geom_ribbon(aes(ymax= low_resid, ymin= high_resid), fill="steelblue", alpha=0.25) + geom_line(color="steelblue") + facet_wrap(~sex, scales="free_y")  + scale_x_continuous("Year of Trustees Report", limits=c(1980,2010)) + scale_y_continuous("Residual (HMD)") + theme(text=element_text(size=15, color="black"),strip.background = element_rect(fill="snow1"))
+
+ggsave(filename='figures/explaining/graphics-ex-shortrun-1.pdf', plot=residuals_plot, height=5, width=8)
+```
+\end{figure}
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%% Policy Proposals 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\clearpage
+\section{Policy Proposals}
+
+\begin{figure}[h!]
+\caption{Comparison of Policy Proposals Scored by SSA to Post-2000 Residuals in Cost Rate and Balance Forecasts.}\label{proposals}
+```{r proposals,out.width='\\linewidth',custom.plot=TRUE, fig.keep='all', fig.ext='pdf',echo=FALSE}
+
+# calculate residuals for cost and balance (post-2000)
+tf.balance.pred$cost.residual <- tf.balance.pred$cost.rate - tf.balance.pred$cost.truth
+tf.balance.pred$balance.residual <- tf.balance.pred$balance - tf.balance.pred$balance.truth
+cost.resids <- abs(na.omit(tf.balance.pred$cost.residual[tf.balance.pred$TR>=2000]))
+balance.resids <- abs(na.omit(tf.balance.pred$balance.residual[tf.balance.pred$TR>=2000]))
+
+# compare residuals to effects of policy proposals scored by SSA
+proposals.balance <- subset(proposals,variable=="change in actuarial balance")
+proposals.cost <- subset(proposals,variable=="change in cost rate")
+
+pctl.balance.resids <- sapply(proposals.balance$change.summarized.rate, function(x) mean(balance.resids>=abs(x)))
+pctl.balance10.resids <- sapply(proposals.balance$change.max.10, function(x) mean(balance.resids>=abs(x)))
+pctl.cost.resids <- sapply(proposals.cost$change.summarized.rate, function(x) mean(cost.resids>=abs(x)))
+pctl.cost10.resids <- sapply(proposals.cost$change.max.10, function(x) mean(cost.resids>=abs(x)))
+
+policy_df <- data.frame(percentile=c(pctl.balance.resids, pctl.balance10.resids, pctl.cost.resids, pctl.cost10.resids), metric=c(rep("Balance",2*length(pctl.balance.resids)), rep("Cost",2*length(pctl.cost.resids))), years_out=c(rep(75, length(pctl.balance.resids)), rep(10,length(pctl.balance10.resids)), rep(75,length(pctl.cost.resids)), rep(10,length(pctl.cost10.resids))))
+policy_df$x <- 1
+policy_df[policy_df$years_out==75,]$x <- 3
+policy_df$significant <- FALSE
+policy_df[!is.na(policy_df$percentile) & policy_df$percentile <= 0.05, "significant"] <- TRUE
+
+text_df <- data.frame(metric=c("Balance","Balance"), x=rep(2,2), y=c(1.1,-0.1), label=c("Estimated policy effect size\noverwhelmed by (forecasting) uncertainty", "Estimated policy effect size\nlarger than (forecasting) uncertainty"), significant=c(FALSE, TRUE))
+
+label5 <- data.frame(metric=c("Balance"), x=0.25, y=0.075, label="5%")
+
+proposal_plot <- ggplot(data=policy_df, aes(x=x, y=percentile, color=significant, shape=significant)) + geom_hline(yintercept=0.05, color="darkgrey", linetype="dashed") + geom_point(size=3, alpha=0.7, position=position_jitter(width=0.2))  + scale_x_continuous("",breaks=c(1,3),limits=c(0,4),labels=c("10-Year","75-Year")) + scale_y_continuous("Inferred Significance Level (Percentile of Forecast Error)", breaks=c(0,0.2, 0.4, 0.6, 0.8, 1)) + scale_color_manual(guide=F, values=c("indianred1","springgreen4")) +  scale_shape_manual(guide=F, values=c(19,17)) + theme(text=element_text(size=15, color="black"), axis.title.y=element_text(vjust=1), strip.background = element_rect(fill="snow1")) + facet_wrap(~metric) + geom_text(data=text_df, aes(x=x,y=y,label=label, color=significant, shape=NULL), family=ff) + geom_text(data= label5, aes(x=x,y=y,label=label, shape=NULL), color="darkgrey", family=ff) 
+
+
+
+ggsave(filename='figures/explaining/graphics-proposals-1.pdf', plot=proposal_plot, height=8, width=8)
+```
+\end{figure}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%% Technical Panel Recommendations of Ultimate Rate of Mortality Decline  
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\clearpage
+\section{Technical Panel Recommendations of Ultimate Rate of Mortality Decline}
+
+\begin{figure}[h!]
+\caption{Technical Panel Recommendations of Ultimate Rate of Mortality Decline and SSA's Chosen Assumptions. Note: LE=life expectancy.}\label{urod}
+```{r urod_react,out.width='\\linewidth',custom.plot=TRUE, fig.keep='all', fig.ext='pdf',echo=FALSE}
+# create labels
+urod.label <- data.frame(type=c("2","1"), x=rep(2005,2), y=c(0.6,1.1), label=c("Trustees Report Assumptions","Technical Advisory Panel Recommendations"))
+urod.highlow.label <- data.frame(x=rep(2017,2), y=c(1.28,1.25,0.55,0.52), label=c("Higher LE &","Higher Cost","Lower LE &", "Lower Cost"))
+
+urod.df <- read_dta("explaining_systematic_bias_dataverse_files/data/urod.dta")
+  colnames(urod.df) <- map_chr(1:ncol(urod.df), function(x) attr(urod.df[[x]], "label"))
+
+urod.df <- urod.df %>% 
+  mutate(type = as.character(type))
+
+# + scale_color_discrete(guide=urod.df$type,labels=c("Technical Advisory Panel", "Trustees Report"))
+
+urod_plot <- ggplot(urod.df, aes(year,urod)) + geom_point(aes(color=type),size=5) + scale_x_continuous("Year", breaks=seq(2000,2014,2), limits=c(1999,2018)) + scale_y_continuous("Ultimate Rate of Decline of Mortality (%)") + geom_text(data=urod.label, aes(x=x,y=y,color=type,label=label), size=4.5,family=ff) + geom_segment(aes(x=2017, y=0.6, xend=2017, yend=1.2),arrow = arrow(length = unit(0.25,"cm"),type="open", angle=20, ends="both"), lineend="round",alpha=0.5, size=0.5, color="steelblue") + geom_text(data= urod.highlow.label, aes(x,y,label=label), angle=0, size=4.5, color="steelblue",family=ff) + theme(text=element_text(size=15, color="black")) + guides(color=FALSE)
+
+ggsave(filename='figures/explaining/graphics-urod_react-1.pdf', plot=urod_plot, height=8, width=8)
+```
+\end{figure}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\end{document}
