@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>Replication of Systematic Bias and Nontransparency in U.S. Social Security Administration Forecasts     ⚕️</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Jack Luby" />
+    <meta name="date" content="2019-04-24" />
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Replication of ‘Systematic Bias and Nontransparency in U.S. Social Security Administration Forecasts’ <br/> <br/> ⚕️
+## and Some Explanation
+### Jack Luby
+### 2019-04-24
+
+---
+
+
+
+
+# What does the Social Security Administration do?
+- Provide benefits to over 58 million retirees by taxing 210 million workers. 
+&lt;br/&gt; &lt;br/&gt;
+- Taxes come from the current workers and go directly to current retirees.
+&lt;br/&gt; &lt;br/&gt;
+- So, when congress considers SS policy, they need to have a good grasp of what the balance of our "trust funds," essentially the tax revenue yet to be paid out, is going to look like.
+
+---
+class: center, middle
+
+![](figures/systematic/graphics-observed-bw-1.pdf)&lt;!-- --&gt;
+
+---
+# The Problem
+- As we will see, SSA projections of mortality and, more importantly, the overall health of the trust funds, are biased.
+&lt;br/&gt; &lt;br/&gt;
+- As a result, efficient policy is hampered by a lack of clarity and honesty regarding the future of SS balances. 
+&lt;br/&gt; &lt;br/&gt;
+- To make things worse, the SSA has a cryptic methodology with which they develop their forecasts.
+  - This not only creates bias, but makes it impossible for improvements to be made.
+  - Especially problematic when policy is based near exclusively on the SSA's reports. 
+
+---
+# The Data
+- Forecasts
+  - Mortality rate / life expectancy projections from the SSA.
+  - Fertility rate projections from the SSA.
+  - Expenditure, Fund Balance, and Fund Ratio projections from the SSA.
+- Observed values
+  - Mortality rates / life expectancies from the SSA and Human Mortality Database.
+  - Fertility rates from the SSA and Human Fertility Database.
+  - Expenditures, Fund Balances, and Fund Ratios from the SSA.
+  - Policy proposal scorings from congress.
+  - UROD (ultimate rate of decline) values from Trustees' Reports and Technical Advisory Reports.
+
+---
+class: center, middle, inverse
+# What's Wrong?
+Our forecasts are systematically innacurate.
+
+---
+class: center, middle
+
+![](figures/systematic/graphics-2010-resid-by-tr-bw-1.pdf)&lt;!-- --&gt;
+
+---
+class: center, middle
+
+![](figures/systematic/graphics-balance_resid_lattice-bw-1.pdf)&lt;!-- --&gt;
+
+---
+class: center, middle
+
+![](figures/systematic/graphics-cost_resid_lattice-bw-1.pdf)&lt;!-- --&gt;
+
+---
+class: center, middle
+
+![](figures/systematic/graphics-ci-coverage-bw-1.pdf)&lt;!-- --&gt;
+
+---
+class: center, middle, inverse
+# Why?
+It's a hard problem. And the SSA appears to be handling it wrong.
+
+---
+class: center, middle
+
+![](figures/explaining/graphics-hmd-qx-time-1.pdf)&lt;!-- --&gt;
+
+---
+# What they are doing
+- Use 210 separate subjectively chosen UROD's to create their ultimate forecasts.
+- Then, combine all of these UROD's together and review them. 
+&lt;img src="figures/explaining/SSA-calculations.png" width="2235" /&gt;
+- "Finally, SSA evaluates the quality of its overall forecast of total mortality well into the future. For example, if the age profile of the forecast in the year 2100 is not smooth or does not follow the ubiquitous shape of age profiles, SSA will readjust some of the UROD and reevaluate the quality of the updated total mortality forecast."
+
+---
+# Why they are doing it
+
+---
+class: center, middle, inverse
+# What Does This Mean?
+Our forecasts don't make sense.
+---
+class: center, middle
+
+![](figures/explaining/graphics-mx-problems-1.pdf)&lt;!-- --&gt;
+
+---
+class: center, middle
+
+![](figures/explaining/graphics-ex-shortrun-1.pdf)&lt;!-- --&gt;
+
+---
+class: center, middle, inverse
+# And The Implications Are Significant.
+
+---
+class: center, middle
+
+![](figures/explaining/graphics-proposals-1.pdf)&lt;!-- --&gt;
+
+---
+class: center, middle
+
+![](figures/systematic/graphics-unanticip_costs-bw-1.pdf)&lt;!-- --&gt;
+
+---
+class: center, middle, inverse
+# Can We Do Better?
+Yes. We can.
+
+---
+class: center, middle
+
+![](figures/explaining/graphics-urod_react-1.pdf)&lt;!-- --&gt;
+
+---
+class: center, middle, inverse
+# Extension Concept
+
+---
+class: center, middle
+
+![](figures/explaining/graphics-hmd-qx-age-1.pdf)&lt;!-- --&gt;
+
+---
+class: center, middle
+
+![](figures/explaining/graphics-ageprofiles-1.pdf)&lt;!-- --&gt;
+
+---
+class: center, middle
+
+![](figures/explaining/graphics-ratechange-1.pdf)&lt;!-- --&gt;
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
