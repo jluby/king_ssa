@@ -203,3 +203,7 @@ class: center, middle
 ```{r echo = FALSE, warning = FALSE}
 include_graphics("figures/explaining/graphics-ratechange-1.pdf")
 ```
+
+---
+class: center, middle, inverse
+# Questions & Comments (Especially Comments)
