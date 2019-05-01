@@ -155,6 +155,172 @@ ggsave(filename='figures/systematic/graphics-observed-bw-1.pdf', plot=obs.plot, 
 \end{figure}
 
 
+```{r}
+obs.df.future <- obs.df %>% 
+  add_row(year = 2011:2020, sex = "Male", age = 0, type = "Male Life Expectancy at Birth", type_order = 1, .after = 29) %>% 
+  add_row(year = 2011:2020, sex = "Female", age = 0, type = "Female Life Expectancy at Birth", type_order = 2, .after = 68) %>% 
+  add_row(year = 2011:2020, sex = "Male", age = 65, type = "Male Life Expectancy at 65", type_order = 3, .after = 107) %>% 
+  add_row(year = 2011:2020, sex = "Female", age = 65, type = "Female Life Expectancy at 65", type_order = 4, .after = 146)
+```
+
+
+```{r}
+male_birth <- obs.df.future %>% 
+  filter(type == "Male Life Expectancy at Birth")
+  
+male_birth_lm <- lm(
+    ex ~ year,
+    data = male_birth)
+
+male_birth_preds <- predict(
+    male_birth_lm,
+    newdata = male_birth,
+    interval = "confidence"
+)
+
+female_birth <- obs.df.future %>% 
+  filter(type == "Female Life Expectancy at Birth")
+  
+female_birth_lm <- lm(
+    ex ~ year,
+    data = female_birth)
+
+female_birth_preds <- predict(
+    female_birth_lm,
+    newdata = female_birth,
+    interval = "confidence"
+)
+
+male_65 <- obs.df.future %>% 
+  filter(type == "Male Life Expectancy at 65")
+  
+male_65_lm <- lm(
+    ex ~ year,
+    data = male_65)
+
+male_65_preds <- predict(
+    male_65_lm,
+    newdata = male_65,
+    interval = "confidence"
+)
+
+female_65 <- obs.df.future %>% 
+  filter(type == "Female Life Expectancy at 65")
+  
+female_65_lm <- lm(
+    ex ~ year,
+    data = female_65)
+
+female_65_preds <- predict(
+    female_65_lm,
+    newdata = female_65,
+    interval = "confidence"
+)
+
+linear_preds <- rbind(male_birth_preds, female_birth_preds, male_65_preds, female_65_preds)
+
+obs.df.future <- bind_cols(obs.df.future, as.data.frame(linear_preds))
+
+obs.df.simple.plots <- obs.df.future %>% 
+  filter(year <= 2010)
+
+obs.plot.reg <- ggplot(data=obs.df.simple.plots, aes(x=year, y=ex-fit)) + geom_point(color="gray19") + scale_x_continuous("Year of Trustees Report") + scale_y_continuous("Observed Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Observed Period Life Expectancy")
+
+obs.plot.linear.pred <- ggplot(data=obs.df.simple.plots, aes(x=year, y=ex)) + geom_point(color="gray19") + scale_x_continuous("Year of Trustees Report") + scale_y_continuous("Observed Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Observed Period Life Expectancy") + geom_line(aes(y=fit), color = "red")
+
+ggsave(filename='figures/systematic/graphics-observed-regularized-bw-1.pdf', plot=obs.plot.reg, height=8, width=8)
+ggsave(filename='figures/systematic/graphics-observed-linear_pred-bw-1.pdf', plot=obs.plot.linear.pred, height=8, width=8)
+```
+
+```{r}
+obs.plot.with.future <- ggplot(data=obs.df.future, aes(x=year, y=ex)) + geom_point(color="gray19") + scale_x_continuous("Year of Trustees Report") + scale_y_continuous("Observed Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Observed Period Life Expectancy") + geom_line(aes(y=fit), color = "red")
+
+# obs.df.future.preds.only <- obs.df.future %>% 
+  # mutate(ex.hat = ifelse(year <= 2010, NA, ex.hat))
+
+# obs.plot.future.preds.only <- ggplot(data=obs.df.future.preds.only, aes(x=year, y=ex)) + geom_point(color="gray19") + scale_x_continuous("Year of Trustees Report") + scale_y_continuous("Observed Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Observed Period Life Expectancy") + geom_line(aes(y=ex.hat), color = "red")
+
+ggsave(filename='figures/systematic/graphics-linear_pred_past_and_future-bw-1.pdf', plot=obs.plot.with.future, height=8, width=8)
+# ggsave(filename='figures/systematic/graphics-linear_pred_future-bw-1.pdf', plot=obs.plot.future.preds.only, height=8, width=8)
+```
+
+```{r prophet}
+library(prophet)
+library(lubridate)
+
+obs.df.future.prophet <- obs.df
+
+colnames(obs.df.future.prophet)[1] <- "ds"
+colnames(obs.df.future.prophet)[4] <- "y"
+
+obs.df.future.prophet$ds <- paste0(obs.df.future.prophet$ds, "/1/1", sep = "")
+
+obs.df.future.prophet <- obs.df.future.prophet %>% 
+  mutate(ds = as.Date(ds))
+
+prophet_male_birth <- obs.df.future.prophet %>%
+  filter(type == "Male Life Expectancy at Birth") %>% 
+  prophet()
+
+future_male_birth <- make_future_dataframe(prophet_male_birth, periods = 10, freq = "year") 
+
+forecast_male_birth <- predict(prophet_male_birth, future_male_birth) %>% 
+  mutate(type = "Male Life Expectancy at Birth")
+
+
+prophet_female_birth <- obs.df.future.prophet %>%
+  filter(type == "Female Life Expectancy at Birth") %>% 
+  prophet()
+
+future_female_birth <- make_future_dataframe(prophet_female_birth, periods = 10, freq = "year") 
+
+forecast_female_birth <- predict(prophet_female_birth, future_female_birth) %>% 
+  mutate(type = "Female Life Expectancy at Birth")
+
+
+prophet_male_65 <- obs.df.future.prophet %>%
+  filter(type == "Male Life Expectancy at 65") %>% 
+  prophet()
+
+future_male_65 <- make_future_dataframe(prophet_male_65, periods = 10, freq = "year") 
+
+forecast_male_65 <- predict(prophet_male_65, future_male_65) %>% 
+  mutate(type = "Male Life Expectancy at 65")
+
+prophet_female_65 <- obs.df.future.prophet %>%
+  filter(type == "Female Life Expectancy at 65") %>% 
+  prophet()
+
+future_female_65 <- make_future_dataframe(prophet_female_65, periods = 10, freq = "year") 
+
+forecast_female_65 <- predict(prophet_female_65, future_female_65) %>% 
+  mutate(type = "Female Life Expectancy at 65")
+
+forecast <- rbind(forecast_male_birth, forecast_female_birth, forecast_male_65, forecast_female_65)
+
+forecast <- forecast %>% 
+  select(yhat, yhat_lower, yhat_upper)
+
+obs.df.future <- bind_cols(obs.df.future, forecast)
+```
+
+```{r prophet_plots}
+obs.plot.prophet.fit <- obs.df.future %>% 
+  filter(year <= 2010) %>% 
+  ggplot(aes(x=year, y=ex)) + geom_point(color="gray19") + scale_x_continuous("Year of Trustees Report") + scale_y_continuous("Observed Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Observed Period Life Expectancy") + geom_line(aes(y=yhat, color = "red"))
+
+ggsave(filename='figures/systematic/graphics-prophet-fit-bw-1.pdf', plot=obs.plot.prophet.fit, height=8, width=8)
+
+obs.plot.prophet <- ggplot(data=obs.df.future, aes(x=year, y=ex)) + geom_point(color="gray19") + scale_x_continuous("Year of Trustees Report") + scale_y_continuous("Observed Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Observed Period Life Expectancy") + geom_line(aes(y=yhat, color = "red"))
+
+ggsave(filename='figures/systematic/graphics-prophet_pred_future-bw-1.pdf', plot=obs.plot.prophet, height=8, width=8)
+```
+
+```{r}
+male_65_fit <- auto.arima(male_65)
+```
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%% 2010 and 2005 LE Forecasts      %%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
