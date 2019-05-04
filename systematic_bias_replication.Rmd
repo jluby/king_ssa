@@ -956,9 +956,19 @@ ggsave(filename='figures/systematic/graphics-pred_all_2005-bw-1.pdf', plot=obs.p
 ```
 
 ```{r hmd_v_ssa_plot}
-hmd_v_ssa <- ex.use %>%
+hmd_v_ssa_use <- ex.use %>%
   mutate(type = paste0(sex, age, sep = "")) %>% 
-  ggplot(aes(x=forecast.year, y=hmd_observed)) + scale_x_continuous("Year") + scale_y_continuous("Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Observed Period Life Expectancy") + geom_line(aes(y=hmd_observed), color = "lightseagreen") + geom_line(aes(y=ssa_observed), color = "darkorange3")
+  mutate(type = case_when(type == 'Female0' ~ "Female Life Expectancy at Birth",
+                          type == 'Female65' ~"Female Life Expectancy at 65",
+                          type == 'Male0' ~"Male Life Expectancy at Birth",
+                          type == 'Male65'~"Male Life Expectancy at 65"))
+hmd_v_ssa_use$type= factor(hmd_v_ssa_use$type, levels=c("Male Life Expectancy at Birth",
+                                                        "Female Life Expectancy at Birth",
+                                                        "Male Life Expectancy at 65",
+                                                        "Female Life Expectancy at 65"))
+
+hmd_v_ssa <- hmd_v_ssa_use %>% 
+  ggplot(aes(x=forecast.year, y=hmd_observed)) + scale_x_continuous("Year") + scale_y_continuous("Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Data Discrepencies Between HMD and SSA Observed Life Expectancies") + geom_line(aes(y=hmd_observed), color = "lightseagreen") + geom_line(aes(y=ssa_observed), color = "darkorange3") + theme(plot.title = element_text(size = 15))
 
 ggsave(filename='figures/systematic/graphics-hmd_v_ssa-bw-1.pdf', plot=hmd_v_ssa, height=8, width=8)
 ```
