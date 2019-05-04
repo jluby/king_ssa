@@ -1,0 +1,113 @@
+---
+title: Proposing a Rudimentary Model to Outperform Social Security Administration
+  Short-Term Forecasts
+author: "Jack Luby"
+date: "5/3/2019"
+output: pdf_document
+citation_package: natbib
+bibliography: bibliography.bib
+abstract: 'Through their 2015 article, "Systematic Bias and Nontransparency in U.S. Social Security Administration Forecasts," (@251041) authors Konstantin Kashin, Gary King, and Samir Soneji present evidence of a persistent downward bias in U.S. Social Security Administration life expectancy and expenditure forecasts. In a companion paper, "Explaining Systematic Bias and Nontransparency in US Social Security Administration Forecasts," (@240566) they expand upon this argument, presenting evidence that private and public pressures, in concert with entrenched nontransparency, have bred consistent bias toward low-cost projections. As a key part of their argument, Kashin et al. argue against SSA forecasting methodology, which makes use of hundreds of subjectively selected UROD (Ultimate Rates of Decline) for various demographic groups and causes of death. Through the selection of these parameters, they argue that the intrusion of bias is inevitable and contend the necessity of creating models which are less influenced by the subjective opinions of SSA actuaries. I expand upon their argument by proposing five rudimentary models and comparing their performance against historical SSA forecasts. I find that nearly all of these models outperform SSA forecasts, and that a univariate linear regression does so in 100% of tested cases. These findings further the arguments made by Kashin et al. and beg an immediate overhaul of SSA forecasting methodologies.'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(knitr)
+```
+
+# Background
+Description of the prior research and what they showed. Back it up with the figure.
+
+```{r}
+include_graphics('figures/systematic/graphics-2010-resid-by-tr-bw-1.pdf')
+```
+
+## Preregistration
+Explain the concept of a preregistration study. What I will be doing. (@Nosek2600)
+
+## Importance
+Explain the value of this exercise.
+
+# Models
+Explain the models being analyzed (short and sweet).
+
+## Linear Model
+General format of a linear model.
+
+## Non-linear Univariate Models
+Explain what these models seek to do, how they weight more recent observations higher, etc.
+
+Very briefly explain the concepts of each model in turn.
+
+### prophet()
+
+### ets()
+
+### auto.arima()
+
+## External Regressor Model
+Explain what the inclusion of an external regressor does differently. Explain the forecasting of obesity rates and smoking rates.
+
+# Performance
+Obviously format these better and make them smaller but go through and explain which models work well and which ones don't. Explain MSE as a metric for this.
+
+```{r}
+include_graphics('figures/systematic/graphics-pred_all-bw-1.pdf')
+include_graphics('figures/systematic/graphics-pred_all_future-bw-1.pdf')
+```
+
+```{r}
+include_graphics('figures/systematic/performance_2010_2015.pdf')
+```
+
+```{r}
+include_graphics('figures/systematic/performance_2010_2017.pdf')
+```
+
+## Linear Model
+Explain how well the linear model performed. Provide reasoning for this. ie. That there is some constant level of progress in life expectancy. While other models overfit according to recent observations, linear model captures a constant technology coefficient.
+
+```{r}
+include_graphics('figures/systematic/graphics-linear_pred_past_and_future-bw-1.pdf')
+include_graphics('figures/systematic/graphics-linear_pred_future-bw-1.pdf')
+```
+
+## Nonlinear Models
+Explain how poorly these models do. Provide reasoning for this. ie. Overfitting according to recent progress from 2005-2010. 
+
+```{r}
+include_graphics('figures/systematic/graphics-pred_all_nonlinear-bw-1.pdf')
+```
+
+## External Regressor Model
+Explain how this model does well. Provide reasoning for this. ie. Smoking and obesity rates start to level off in recent years, dampening the trends. Where other models fail, this one recognizes that progress on limiting mortality might be slowing and controls.
+
+```{r}
+include_graphics('figures/systematic/graphics-arima_xreg_pred_future-bw-1.pdf')
+```
+
+## SSA Model
+Discuss SSA performance. Why does it look this way. What is it doing well/poorly.
+
+```{r}
+include_graphics('figures/systematic/graphics-ssa_pred_future-bw-1.pdf')
+```
+
+# Further Analysis
+Explain the refitting of the auto.arima() with xreg model and the lm() model. Compare their performances to SSA. Run through again where lm() might be going right (and in a similar vein how SSA methods might not be so bad). But, also mention how lm() outperforms ssa models in all groups over all time periods. 
+
+```{r}
+include_graphics('figures/systematic/graphics-pred_all_2000-bw-1.pdf')
+include_graphics('figures/systematic/graphics-pred_all_2005-bw-1.pdf')
+```
+
+# Data Considerations
+Discussion of data discrepencies between hmd and ssa which King brushes over. Talk about how data discrepencies, as well as modeling issues, could be creating the bias we see.
+
+```{r}
+include_graphics('figures/systematic/graphics-hmd_v_ssa-bw-1.pdf')
+```
+
+# Discussion
+Through the fitting of rudimentary models, I find that outperforming current SSA forecasting methodology does not require significant modeling complexity. In fact, a simple univariate linear regression, fitting only a time trend, outperforms Social Security Administration forecasts in all 12 tested subgroups and 5-year time periods. These findings second Kashin et al. in their view that Social Security Administration forecasting could benefit signficantly from simplification and more open sharing of their methods. While future forecasts will always benefit from further expert tuning, the adoption of these two policies would help to rid SSA forecasts of unintended bias such that they would be able to perform better than a simple linear regression.
+
+# References

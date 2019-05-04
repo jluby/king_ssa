@@ -1,0 +1,130 @@
+---
+title: "Data Processing"
+author: "Jack Luby"
+date: "5/1/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(haven)
+processed <- read_dta('nhis_00002.dta')
+```
+
+```{r}
+library(tidyverse)
+processed1 <- processed %>%
+  filter(smokestatus1 > 0 | smokestatus2 > 0) %>% 
+  mutate(smokestatus1_true = case_when(smokestatus1 == 20 ~ 1,
+                                       TRUE ~ 0),
+         smokestatus2_true = case_when(smokestatus2 %in% 10:13 ~ 1,
+                                       TRUE ~ 0),
+         smoker = smokestatus1_true + smokestatus2_true,
+         smoker = case_when(smoker == 2 ~ 1,
+                            TRUE ~ smoker))
+```
+
+```{r}
+df1 <- as.data.frame(1970:2017)
+colnames(df1) <- "year"
+library(imputeTS)
+
+# Adult males
+male_smoke_all <- processed1 %>%
+  group_by(year) %>%
+  filter(sex == 1) %>% 
+  summarize(smoke_rate = mean(smoker)) %>% 
+  mutate(type_order = 1)
+all_years_smoke_men <- merge(df1, male_smoke_all, by.x = "year", all.x = TRUE)
+all_years_smoke_men$smoke_rate <- na.interpolation(all_years_smoke_men$smoke_rate, option ="linear")
+  
+
+# Adult females
+female_smoke_all <- processed1 %>%
+  group_by(year) %>%
+  filter(sex == 2) %>% 
+  summarize(smoke_rate = mean(smoker)) %>% 
+  mutate(type_order = 2)
+all_years_smoke_women <- merge(df1, female_smoke_all, by.x = "year", all.x = TRUE)
+all_years_smoke_women$smoke_rate <- na.interpolation(all_years_smoke_women$smoke_rate, option ="linear")
+
+
+# Males over 65
+male_smoke_65 <- processed1 %>%
+  group_by(year) %>%
+  filter(age >= 65) %>%
+  filter(sex == 1) %>% 
+  summarize(smoke_rate = mean(smoker)) %>% 
+  mutate(type_order = 3)
+all_years_smoke_men_65 <- merge(df1, male_smoke_65, by.x = "year", all.x = TRUE)
+all_years_smoke_men_65$smoke_rate <- na.interpolation(all_years_smoke_men_65$smoke_rate, option ="linear")
+
+
+# Females over 65
+female_smoke_65 <- processed1 %>%
+  group_by(year) %>%
+  filter(age >= 65) %>%
+  filter(sex == 2) %>% 
+  summarize(smoke_rate = mean(smoker)) %>% 
+  mutate(type_order = 4)
+all_years_smoke_women_65 <- merge(df1, female_smoke_65, by.x = "year", all.x = TRUE)
+all_years_smoke_women_65$smoke_rate <- na.interpolation(all_years_smoke_women_65$smoke_rate, option ="linear")
+
+all_years_smoke_rates <- rbind(all_years_smoke_men[7:48,], all_years_smoke_women[7:48,], all_years_smoke_men_65[7:48,], all_years_smoke_women_65[7:48,])
+```
+
+```{r}
+obesity <- processed %>% 
+  filter(!is.na(bmicalc),
+         bmicalc > 0,
+         bmicalc < 250) %>% 
+  mutate(obese = case_when(bmicalc >= 30 ~ 1,
+                           TRUE ~ 0))
+```
+
+```{r}
+# Adult men
+male_obese_all <- obesity %>%
+  group_by(year) %>%
+  filter(sex == 1) %>% 
+  summarize(obesity_rate = mean(obese)) %>% 
+  mutate(type_order = 1)
+
+# Adult women
+female_obese_all <- obesity %>%
+  group_by(year) %>%
+  filter(sex == 2) %>% 
+  summarize(obesity_rate = mean(obese)) %>% 
+  mutate(type_order = 2)
+
+# Men over 65
+male_obese_65 <- obesity %>%
+  group_by(year) %>%
+  filter(age >= 65) %>% 
+  filter(sex == 1) %>% 
+  summarize(obesity_rate = mean(obese)) %>% 
+  mutate(type_order = 3)
+
+
+# Women over 65
+female_obese_65 <- obesity %>%
+  group_by(year) %>%
+  filter(age >= 65) %>% 
+  filter(sex == 2) %>% 
+  summarize(obesity_rate = mean(obese)) %>% 
+  mutate(type_order = 4)
+
+all_years_obesity_rates <- rbind(male_obese_all, female_obese_all, male_obese_65, female_obese_65)
+```
+
+```{r}
+library(readr)
+smoking_and_obesity <- bind_cols(all_years_smoke_rates, all_years_obesity_rates)
+smoking_and_obesity <- smoking_and_obesity %>% 
+  select(-year1, -type_order)
+colnames(smoking_and_obesity)[4] <- "type_order"
+write_rds(smoking_and_obesity, "smoking_and_obesity.rds")
+```

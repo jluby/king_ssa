@@ -148,7 +148,7 @@ obs.df <- obs.df[1:312,]
 obs.df <- obs.df %>% 
   filter(year >= 1982)
 
-obs.plot <- ggplot(data=obs.df, aes(x=year, y=ex)) + geom_point(color="gray19") + scale_x_continuous("Year of Trustees Report") + scale_y_continuous("Observed Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Observed Period Life Expectancy")
+obs.plot <- ggplot(data=obs.df, aes(x=year, y=ex)) + geom_point(color="gray19") + scale_x_continuous("Year") + scale_y_continuous("Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Observed Period Life Expectancy")
 
 ggsave(filename='figures/systematic/graphics-observed-bw-1.pdf', plot=obs.plot, height=8, width=8)
 ```
@@ -164,7 +164,7 @@ obs.df.future <- obs.df %>%
 ```
 
 
-```{r}
+```{r linear_fits}
 male_birth <- obs.df.future %>% 
   filter(type == "Male Life Expectancy at Birth")
   
@@ -224,24 +224,12 @@ obs.df.future <- bind_cols(obs.df.future, as.data.frame(linear_preds))
 obs.df.simple.plots <- obs.df.future %>% 
   filter(year <= 2010)
 
-obs.plot.reg <- ggplot(data=obs.df.simple.plots, aes(x=year, y=ex-fit)) + geom_point(color="gray19") + scale_x_continuous("Year of Trustees Report") + scale_y_continuous("Observed Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Observed Period Life Expectancy")
+obs.plot.reg <- ggplot(data=obs.df.simple.plots, aes(x=year, y=ex-fit)) + geom_point(color="gray19") + scale_x_continuous("Year") + scale_y_continuous("Observed Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Observed Period Life Expectancy")
 
-obs.plot.linear.pred <- ggplot(data=obs.df.simple.plots, aes(x=year, y=ex)) + geom_point(color="gray19") + scale_x_continuous("Year of Trustees Report") + scale_y_continuous("Observed Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Observed Period Life Expectancy") + geom_line(aes(y=fit), color = "red")
+obs.plot.linear.pred <- ggplot(data=obs.df.simple.plots, aes(x=year, y=ex)) + geom_point(color="gray19") + scale_x_continuous("Year") + scale_y_continuous("Observed Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Observed Period Life Expectancy") + geom_line(aes(y=fit), color = "red")
 
 ggsave(filename='figures/systematic/graphics-observed-regularized-bw-1.pdf', plot=obs.plot.reg, height=8, width=8)
 ggsave(filename='figures/systematic/graphics-observed-linear_pred-bw-1.pdf', plot=obs.plot.linear.pred, height=8, width=8)
-```
-
-```{r}
-obs.plot.with.future <- ggplot(data=obs.df.future, aes(x=year, y=ex)) + geom_point(color="gray19") + scale_x_continuous("Year of Trustees Report") + scale_y_continuous("Observed Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Observed Period Life Expectancy") + geom_line(aes(y=fit), color = "red")
-
-# obs.df.future.preds.only <- obs.df.future %>% 
-  # mutate(ex.hat = ifelse(year <= 2010, NA, ex.hat))
-
-# obs.plot.future.preds.only <- ggplot(data=obs.df.future.preds.only, aes(x=year, y=ex)) + geom_point(color="gray19") + scale_x_continuous("Year of Trustees Report") + scale_y_continuous("Observed Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Observed Period Life Expectancy") + geom_line(aes(y=ex.hat), color = "red")
-
-ggsave(filename='figures/systematic/graphics-linear_pred_past_and_future-bw-1.pdf', plot=obs.plot.with.future, height=8, width=8)
-# ggsave(filename='figures/systematic/graphics-linear_pred_future-bw-1.pdf', plot=obs.plot.future.preds.only, height=8, width=8)
 ```
 
 ```{r prophet}
@@ -258,12 +246,11 @@ obs.df.future.prophet$ds <- paste0(obs.df.future.prophet$ds, "/1/1", sep = "")
 obs.df.future.prophet <- obs.df.future.prophet %>% 
   mutate(ds = as.Date(ds))
 
+
 prophet_male_birth <- obs.df.future.prophet %>%
   filter(type == "Male Life Expectancy at Birth") %>% 
   prophet()
-
 future_male_birth <- make_future_dataframe(prophet_male_birth, periods = 10, freq = "year") 
-
 forecast_male_birth <- predict(prophet_male_birth, future_male_birth) %>% 
   mutate(type = "Male Life Expectancy at Birth")
 
@@ -271,9 +258,7 @@ forecast_male_birth <- predict(prophet_male_birth, future_male_birth) %>%
 prophet_female_birth <- obs.df.future.prophet %>%
   filter(type == "Female Life Expectancy at Birth") %>% 
   prophet()
-
 future_female_birth <- make_future_dataframe(prophet_female_birth, periods = 10, freq = "year") 
-
 forecast_female_birth <- predict(prophet_female_birth, future_female_birth) %>% 
   mutate(type = "Female Life Expectancy at Birth")
 
@@ -281,18 +266,15 @@ forecast_female_birth <- predict(prophet_female_birth, future_female_birth) %>%
 prophet_male_65 <- obs.df.future.prophet %>%
   filter(type == "Male Life Expectancy at 65") %>% 
   prophet()
-
 future_male_65 <- make_future_dataframe(prophet_male_65, periods = 10, freq = "year") 
-
 forecast_male_65 <- predict(prophet_male_65, future_male_65) %>% 
   mutate(type = "Male Life Expectancy at 65")
+
 
 prophet_female_65 <- obs.df.future.prophet %>%
   filter(type == "Female Life Expectancy at 65") %>% 
   prophet()
-
 future_female_65 <- make_future_dataframe(prophet_female_65, periods = 10, freq = "year") 
-
 forecast_female_65 <- predict(prophet_female_65, future_female_65) %>% 
   mutate(type = "Female Life Expectancy at 65")
 
@@ -304,21 +286,701 @@ forecast <- forecast %>%
 obs.df.future <- bind_cols(obs.df.future, forecast)
 ```
 
+```{r arima_fit}
+library(forecast)
+
+male_birth_fit <- auto.arima(male_birth$ex[1:29])
+male_birth_arima <- as.data.frame(forecast(male_birth_fit, h = 10)) %>% 
+  select(`Point Forecast`, `Lo 95`, `Hi 95`)
+male_birth_arima <- male_birth_arima %>% 
+  add_row(`Point Forecast` = rep(NA, 29), .before = 1)
+
+female_birth_fit <- auto.arima(female_birth$ex[1:29])
+female_birth_arima <- as.data.frame(forecast(female_birth_fit, h = 10)) %>% 
+  select(`Point Forecast`, `Lo 95`, `Hi 95`)
+female_birth_arima <- female_birth_arima %>% 
+  add_row(`Point Forecast` = rep(NA, 29), .before = 1)
+
+male_65_fit <- auto.arima(male_65$ex[1:29])
+male_65_arima <- as.data.frame(forecast(male_65_fit, h = 10)) %>% 
+  select(`Point Forecast`, `Lo 95`, `Hi 95`)
+male_65_arima <- male_65_arima %>% 
+  add_row(`Point Forecast` = rep(NA, 29), .before = 1)
+
+female_65_fit <- auto.arima(female_65$ex[1:29])
+female_65_arima <- as.data.frame(forecast(female_65_fit, h = 10)) %>% 
+  select(`Point Forecast`, `Lo 95`, `Hi 95`)
+female_65_arima <- female_65_arima %>% 
+  add_row(`Point Forecast` = rep(NA, 29), .before = 1)
+
+arima_forecasts <- rbind(male_birth_arima, female_birth_arima, male_65_arima, female_65_arima)
+colnames(arima_forecasts) <- c('point_arima', 'lo95_arima', 'hi95_arima')
+
+obs.df.future <- bind_cols(obs.df.future,arima_forecasts)
+```
+
+```{r ets_fit}
+male_birth_fit_ets <- ets(male_birth$ex[1:29])
+male_birth_ets <- as.data.frame(forecast(male_birth_fit_ets, h = 10)) %>% 
+  select(`Point Forecast`, `Lo 95`, `Hi 95`)
+male_birth_ets <- male_birth_ets %>% 
+  add_row(`Point Forecast` = rep(NA, 29), .before = 1)
+
+female_birth_fit_ets <- ets(female_birth$ex[1:29])
+female_birth_ets <- as.data.frame(forecast(female_birth_fit_ets, h = 10)) %>% 
+  select(`Point Forecast`, `Lo 95`, `Hi 95`)
+female_birth_ets <- female_birth_ets %>% 
+  add_row(`Point Forecast` = rep(NA, 29), .before = 1)
+
+male_65_fit_ets <- ets(male_65$ex[1:29])
+male_65_ets <- as.data.frame(forecast(male_65_fit_ets, h = 10)) %>% 
+  select(`Point Forecast`, `Lo 95`, `Hi 95`)
+male_65_ets <- male_65_ets %>% 
+  add_row(`Point Forecast` = rep(NA, 29), .before = 1)
+
+female_65_fit_ets <- ets(female_65$ex[1:29])
+female_65_ets <- as.data.frame(forecast(female_65_fit_ets, h = 10)) %>% 
+  select(`Point Forecast`, `Lo 95`, `Hi 95`)
+female_65_ets <- female_65_ets %>% 
+  add_row(`Point Forecast` = rep(NA, 29), .before = 1)
+
+ets_forecasts <- rbind(male_birth_ets, female_birth_ets, male_65_ets, female_65_ets)
+colnames(ets_forecasts) <- c('point_ets', 'lo95_ets', 'hi95_ets')
+
+obs.df.future <- bind_cols(obs.df.future, ets_forecasts)
+```
+
+```{r lag_select}
+library(readr)
+library(dplyr)
+smoking_and_obesity <- read_rds("smoking_and_obesity.rds")
+
+smoke_obese_projections <- smoking_and_obesity %>% 
+  filter(year %in% 1982:2017) %>% 
+  add_row(year = 2018:2020, type_order = 1, .after=36) %>% 
+  add_row(year = 2018:2020, type_order = 2, .after=75) %>% 
+  add_row(year = 2018:2020, type_order = 3, .after=114) %>% 
+  add_row(year = 2018:2020, type_order = 4, .after=153)
+
+smoke_obese_bind <- smoke_obese_projections %>% 
+  select(smoke_rate, obesity_rate)
+
+obs.df.future <- bind_cols(obs.df.future, smoke_obese_bind)
+
+# Attempted to use this to solve lag problem but did not have a good time.
+# I think it's best to just use the base values to keep things simple.
+
+# lag_select_df <- obs.df %>% 
+  # select(ex)
+
+# exogen_all_women = smoke_obese_use[1:29,] %>% 
+  # dplyr::select(smoke_rate, obesity_rate)
+
+# library(vars)
+# lag_select_df[1:29,] %>% 
+  # VARselect(lag.max = 10, exogen = exogen_all_women)
+```
+
+```{r smoke_and_obese_projections}
+men_smoke <- smoke_obese_projections %>% 
+  filter(type_order == 1)
+women_smoke <- smoke_obese_projections %>% 
+  filter(type_order == 2)
+men_65_smoke <- smoke_obese_projections %>% 
+  filter(type_order == 3)
+women_65_smoke <- smoke_obese_projections %>% 
+  filter(type_order == 4)
+
+male_birth_smoke_ets <- ets(men_smoke$smoke_rate[1:29])
+men_smoke[30:39,2] <- as.data.frame(forecast(male_birth_smoke_ets, h = 10))[,1]
+
+female_birth_smoke_ets <- ets(women_smoke$smoke_rate[1:29])
+women_smoke[30:39,2] <- as.data.frame(forecast(female_birth_smoke_ets, h = 10))[,1]
+
+male_65_smoke_ets <- ets(men_65_smoke$smoke_rate[1:29])
+men_65_smoke[30:39,2] <- as.data.frame(forecast(male_65_smoke_ets, h = 10))[,1]
+
+female_65_smoke_ets <- ets(women_65_smoke$smoke_rate[1:29])
+women_65_smoke[30:39,2] <- as.data.frame(forecast(female_65_smoke_ets, h = 10))[,1]
+
+male_birth_obese_ets <- ets(men_smoke$obesity_rate[1:29])
+men_smoke[30:39,3] <- as.data.frame(forecast(male_birth_obese_ets, h = 10))[,1]
+
+female_birth_obese_ets <- ets(women_smoke$obesity_rate[1:29])
+women_smoke[30:39,3] <- as.data.frame(forecast(female_birth_obese_ets, h = 10))[,1]
+
+male_65_obese_ets <- ets(men_65_smoke$obesity_rate[1:29])
+men_65_smoke[30:39,3] <- as.data.frame(forecast(male_65_obese_ets, h = 10))[,1]
+
+female_65_obese_ets <- ets(women_65_smoke$obesity_rate[1:29])
+women_65_smoke[30:39,3] <- as.data.frame(forecast(female_65_obese_ets, h = 10))[,1]
+
+men_smoke <- as.matrix(men_smoke)
+women_smoke <- as.matrix(women_smoke)
+men_65_smoke <- as.matrix(men_65_smoke)
+women_65_smoke <- as.matrix(women_65_smoke)
+
+smoke_obese_projections_filled <- as.data.frame(rbind(men_smoke[,2:3], women_smoke[,2:3], men_65_smoke[,2:3], women_65_smoke[,2:3]))
+```
+
+```{r arima_xreg}
+male_birth_fit <- auto.arima(male_birth$ex[1:29], xreg=men_smoke[1:29,2:3])
+male_birth_arima_xreg <- as.data.frame(forecast(male_birth_fit, h = 10, xreg=men_smoke[30:39,2:3])) %>% 
+  select(`Point Forecast`, `Lo 95`, `Hi 95`)
+male_birth_arima_xreg <- male_birth_arima_xreg %>% 
+  add_row(`Point Forecast` = rep(NA, 29), .before = 1)
+
+female_birth_fit <- auto.arima(female_birth$ex[1:29], xreg=women_smoke[1:29,2:3])
+female_birth_arima_xreg <- as.data.frame(forecast(female_birth_fit, h = 10, xreg=women_smoke[30:39,2:3])) %>% 
+  select(`Point Forecast`, `Lo 95`, `Hi 95`)
+female_birth_arima_xreg <- female_birth_arima_xreg %>% 
+  add_row(`Point Forecast` = rep(NA, 29), .before = 1)
+
+male_65_fit <- auto.arima(male_65$ex[1:29], xreg=men_65_smoke[1:29,2:3])
+male_65_arima_xreg <- as.data.frame(forecast(male_65_fit, h = 10, xreg=men_65_smoke[30:39,2:3])) %>% 
+  select(`Point Forecast`, `Lo 95`, `Hi 95`)
+male_65_arima_xreg <- male_65_arima_xreg %>% 
+  add_row(`Point Forecast` = rep(NA, 29), .before = 1)
+
+female_65_fit <- auto.arima(female_65$ex[1:29], xreg=women_65_smoke[1:29,2:3])
+female_65_arima_xreg <- as.data.frame(forecast(female_65_fit, h = 10, xreg=women_65_smoke[30:39,2:3])) %>% 
+  select(`Point Forecast`, `Lo 95`, `Hi 95`)
+female_65_arima_xreg <- female_65_arima_xreg %>% 
+  add_row(`Point Forecast` = rep(NA, 29), .before = 1)
+
+arima_forecasts_xreg <- rbind(male_birth_arima_xreg, female_birth_arima_xreg, male_65_arima_xreg, female_65_arima_xreg)
+colnames(arima_forecasts_xreg) <- c('point_arima_xreg', 'lo95_arima_xreg', 'hi95_arima_xreg')
+
+obs.df.future <- bind_cols(obs.df.future,arima_forecasts_xreg)
+```
+
+```{r add_new_data}
+post_2010_data <- read_csv('post_2010_data.csv')[1:40, 1:6]
+
+post_2010_data_bind <- post_2010_data %>% 
+  add_row(year = 1982:2010, type_order = 1, .before = 1) %>% 
+  add_row(year = 1982:2010, type_order = 2, .before = 40) %>% 
+  add_row(year = 1982:2010, type_order = 3, .before = 79) %>% 
+  add_row(year = 1982:2010, type_order = 4, .before = 118)
+
+obs.df.future <- bind_cols(obs.df.future, post_2010_data_bind)
+```
+
+```{r linear_future_plots}
+obs.plot.with.future <- ggplot(data=obs.df.future, aes(x=year, y=ex)) + geom_point(color="gray19") + scale_x_continuous("Year") + scale_y_continuous("Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Observed Period Life Expectancy with Linear Fit") + geom_line(aes(y=fit), color = "red")
+
+obs.df.future.preds.only <- obs.df.future %>% 
+   mutate(fit = ifelse(year <= 2010, NA, fit),
+          lwr = ifelse(year <= 2010, NA, lwr),
+          upr = ifelse(year <= 2010, NA, upr))
+
+obs.plot.future.preds.only <- obs.df.future.preds.only %>% 
+  #filter(type_order == 2) %>% 
+  ggplot(aes(x=year, y=ex)) + geom_point(color="gray19") + scale_x_continuous("Year") + scale_y_continuous("Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Performance of Simple Linear Model") + geom_line(aes(y=fit), color = "lightseagreen") + geom_ribbon(aes(ymin=lwr, ymax=upr), alpha=0.1, fill = "lightseagreen") + geom_point(aes(y = observed))
+
+ggsave(filename='figures/systematic/graphics-linear_pred_past_and_future-bw-1.pdf', plot=obs.plot.with.future, height=8, width=8)
+ggsave(filename='figures/systematic/graphics-linear_pred_future-bw-1.pdf', plot=obs.plot.future.preds.only, height=8, width=8)
+```
+
 ```{r prophet_plots}
 obs.plot.prophet.fit <- obs.df.future %>% 
-  filter(year <= 2010) %>% 
-  ggplot(aes(x=year, y=ex)) + geom_point(color="gray19") + scale_x_continuous("Year of Trustees Report") + scale_y_continuous("Observed Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Observed Period Life Expectancy") + geom_line(aes(y=yhat, color = "red"))
+  #filter(year <= 2010) %>% 
+  ggplot(aes(x=year, y=ex)) + geom_point(color="gray19") + scale_x_continuous("Year") + scale_y_continuous("Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Observed Period Life Expectancy") + geom_line(aes(y=yhat, color = "red"))
 
 ggsave(filename='figures/systematic/graphics-prophet-fit-bw-1.pdf', plot=obs.plot.prophet.fit, height=8, width=8)
 
-obs.plot.prophet <- ggplot(data=obs.df.future, aes(x=year, y=ex)) + geom_point(color="gray19") + scale_x_continuous("Year of Trustees Report") + scale_y_continuous("Observed Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Observed Period Life Expectancy") + geom_line(aes(y=yhat, color = "red"))
+obs.df.future <- obs.df.future %>% 
+  mutate(yhat = ifelse(year > 2010, yhat, NA),
+         yhat_lower = ifelse(year > 2010, yhat_lower, NA),
+         yhat_upper = ifelse(year > 2010, yhat_upper, NA))
+
+obs.plot.prophet <- ggplot(data=obs.df.future, aes(x=year, y=ex)) + geom_point(color="gray19") + scale_x_continuous("Year") + scale_y_continuous("Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Observed Period Life Expectancy") + geom_line(aes(y=yhat), color = "deepskyblue2") + geom_ribbon(aes(ymin=yhat_lower, ymax=yhat_upper), alpha=0.1, fill = "deepskyblue2") + geom_point(aes(y = observed))
 
 ggsave(filename='figures/systematic/graphics-prophet_pred_future-bw-1.pdf', plot=obs.plot.prophet, height=8, width=8)
 ```
 
-```{r}
-male_65_fit <- auto.arima(male_65)
+```{r ets_plot}
+obs.plot.ets <- obs.df.future %>% 
+  #filter(type_order == 2) %>% 
+  ggplot(aes(x=year, y=ex)) + geom_point(color="gray19") + scale_x_continuous("Year") + scale_y_continuous("Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Observed Period Life Expectancy") + geom_line(aes(y=point_ets), color = "palegreen4") + geom_ribbon(aes(ymin=lo95_ets, ymax=hi95_ets), alpha=0.1, fill = "palegreen4") + geom_point(aes(y = observed))
+
+ggsave(filename='figures/systematic/graphics-ets_pred_future-bw-1.pdf', plot=obs.plot.ets, height=8, width=8)
 ```
+
+```{r arima_plot}
+obs.plot.arima <- obs.df.future %>% 
+  #filter(type_order == 2) %>% 
+  ggplot(aes(x=year, y=ex)) + geom_point(color="gray19") + scale_x_continuous("Year") + scale_y_continuous("Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Observed Period Life Expectancy") + geom_line(aes(y=point_arima), color = "red4") + geom_ribbon(aes(ymin=lo95_arima, ymax=hi95_arima), alpha=0.1, fill = "red4") + geom_point(aes(y = observed))
+
+ggsave(filename='figures/systematic/graphics-arima_pred_future-bw-1.pdf', plot=obs.plot.arima, height=8, width=8)
+```
+
+```{r arima_plot_xreg}
+obs.plot.arima.xreg <- obs.df.future %>% 
+  #filter(type_order == 2) %>% 
+  ggplot(aes(x=year, y=ex)) + geom_point(color="gray19") + scale_x_continuous("Year") + scale_y_continuous("Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Performance of Arima Model with External Regressors") + geom_line(aes(y=point_arima_xreg), color = "darkorange3") + geom_ribbon(aes(ymin=lo95_arima_xreg, ymax=hi95_arima_xreg), alpha=0.1, fill = "darkorange3") + geom_point(aes(y = observed))
+
+ggsave(filename='figures/systematic/graphics-arima_xreg_pred_future-bw-1.pdf', plot=obs.plot.arima.xreg, height=8, width=8)
+```
+
+```{r ssa_pred_plot}
+obs.plot.ssa <- obs.df.future %>% 
+  #filter(type_order == 2) %>% 
+  ggplot(aes(x=year, y=ex)) + geom_point(color="gray19") + scale_x_continuous("Year") + scale_y_continuous("Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Performance of SSA Forecasts") + geom_line(aes(y=ssa_projection), color = "gray48") + geom_ribbon(aes(ymin=lower_bound, ymax=upper_bound), alpha=0.1, fill = "gray48") + geom_point(aes(y = observed))
+
+ggsave(filename='figures/systematic/graphics-ssa_pred_future-bw-1.pdf', plot=obs.plot.ssa, height=8, width=8)
+```
+
+```{r all_preds_all_data}
+obs.plots.all <- obs.df.future %>%
+  mutate(fit = ifelse(year <= 2010, NA, fit)) %>% 
+  ggplot(aes(x=year, y=ex)) + geom_point(color="gray19") + scale_x_continuous("Year") + scale_y_continuous("Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("No One Model Dominates, but SSA Forecasts Lag Below") + geom_line(aes(y=fit), color = "lightseagreen") + geom_line(aes(y=yhat), color = "deepskyblue2") + geom_line(aes(y=point_ets), color = "palegreen4") + geom_line(aes(y=point_arima), color = "red4") + geom_line(aes(y=point_arima_xreg), color = "darkorange3") + geom_line(aes(y=ssa_projection), color = "gray48") + geom_point(aes(y = observed))
+
+ggsave(filename='figures/systematic/graphics-pred_all-bw-1.pdf', plot=obs.plots.all, height=8, width=8)
+```
+
+```{r all_preds_just_preds}
+obs.plots.all.preds <- obs.df.future %>%
+  mutate(fit = ifelse(year <= 2010, NA, fit)) %>% 
+  filter(year > 2010,
+         year < 2018) %>% 
+  ggplot(aes(x=year, y=ex)) + geom_point(color="gray19") + scale_x_continuous("Year") + scale_y_continuous("Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("No One Model Dominates, but SSA Forecasts Lag Below") + geom_line(aes(y=fit), color = "lightseagreen") + geom_line(aes(y=yhat), color = "deepskyblue2") + geom_line(aes(y=point_ets), color = "palegreen4") + geom_line(aes(y=point_arima), color = "red4") + geom_line(aes(y=point_arima_xreg), color = "darkorange3") + geom_line(aes(y=ssa_projection), color = "gray48") + geom_point(aes(y = observed))
+
+ggsave(filename='figures/systematic/graphics-pred_all_future-bw-1.pdf', plot=obs.plots.all.preds, height=8, width=8)
+```
+
+```{r model_fit_tables}
+library(dplyr)
+library(kableExtra)
+rsq <- function(x, y) cor(x, y) ^ 2
+
+performance_2010_2015 <- obs.df.future %>% 
+  filter(year %in% 2011:2015) %>% 
+  group_by(type) %>% 
+  summarize(ssa = mean((observed - ssa_projection) ^ 2),
+            linear = mean((observed - fit) ^ 2),
+            prophet = mean((observed - yhat) ^ 2),
+            ets = mean((observed - point_ets) ^ 2),
+            arima = mean((observed - point_arima) ^2),
+            arima_xreg = mean((observed - point_arima_xreg) ^2)) %>% 
+  kable(format = 'latex') %>% 
+  save_kable('figures/systematic/performance_2010_2015.pdf')
+performance_2010_2015
+
+
+performance_2010_2017 <- obs.df.future %>% 
+  filter(year %in% 2011:2017) %>% 
+  group_by(type) %>% 
+  summarize(ssa = mean((observed - ssa_projection) ^ 2),
+            linear = mean((observed - fit) ^ 2),
+            prophet = mean((observed - yhat) ^ 2),
+            ets = mean((observed - point_ets) ^ 2),
+            arima = mean((observed - point_arima) ^2),
+            arima_xreg = mean((observed - point_arima_xreg) ^2)) %>% 
+  kable(format = 'latex') %>% 
+  save_kable('figures/systematic/performance_2010_2017.pdf')
+performance_2010_2017
+```
+
+```{r linear_refit_2005_2010}
+male_birth <- obs.df.future %>% 
+  filter(type == "Male Life Expectancy at Birth") %>% 
+  filter(year <= 2010)
+male_birth[25:29, 4] <- NA
+male_birth <- male_birth[,1:6]
+  
+male_birth_lm <- lm(
+    ex ~ year,
+    data = male_birth)
+
+male_birth_preds <- predict(
+    male_birth_lm,
+    newdata = male_birth,
+    interval = "confidence"
+)
+
+female_birth <- obs.df.future %>% 
+  filter(type == "Female Life Expectancy at Birth") %>% 
+  filter(year <= 2010)
+male_birth[25:29, 4] <- NA
+male_birth <- male_birth[,1:6]
+  
+female_birth_lm <- lm(
+    ex ~ year,
+    data = female_birth)
+
+female_birth_preds <- predict(
+    female_birth_lm,
+    newdata = female_birth,
+    interval = "confidence"
+)
+
+male_65 <- obs.df.future %>% 
+  filter(type == "Male Life Expectancy at 65") %>% 
+  filter(year <= 2010)
+male_birth[25:29, 4] <- NA
+male_birth <- male_birth[,1:6]
+  
+male_65_lm <- lm(
+    ex ~ year,
+    data = male_65)
+
+male_65_preds <- predict(
+    male_65_lm,
+    newdata = male_65,
+    interval = "confidence"
+)
+
+female_65 <- obs.df.future %>% 
+  filter(type == "Female Life Expectancy at 65") %>% 
+  filter(year <= 2010)
+male_birth[25:29, 4] <- NA
+male_birth <- male_birth[,1:6]
+  
+female_65_lm <- lm(
+    ex ~ year,
+    data = female_65)
+
+female_65_preds <- predict(
+    female_65_lm,
+    newdata = female_65,
+    interval = "confidence"
+)
+
+linear_preds <- as.data.frame(rbind(male_birth_preds, female_birth_preds, male_65_preds, female_65_preds))
+colnames(linear_preds) <- c("fit", "lwr", "upr")
+
+obs.df_2005 <- obs.df.future %>% 
+  filter(year <= 2010) %>% 
+  mutate(ex = ifelse(year > 2005, NA, ex)) %>% 
+  select(year, sex, age, ex, type, type_order)
+
+obs.df_2005 <- bind_cols(obs.df_2005, linear_preds)
+```
+
+```{r smoke_and_obese_projections_2005}
+men_smoke <- smoke_obese_projections %>% 
+  filter(type_order == 1) %>% 
+  filter(year <= 2010)
+women_smoke <- smoke_obese_projections %>% 
+  filter(type_order == 2) %>% 
+  filter(year <= 2010)
+men_65_smoke <- smoke_obese_projections %>% 
+  filter(type_order == 3) %>% 
+  filter(year <= 2010)
+women_65_smoke <- smoke_obese_projections %>% 
+  filter(type_order == 4) %>% 
+  filter(year <= 2010)
+
+male_birth_smoke_ets <- ets(men_smoke$smoke_rate[1:24])
+men_smoke[25:29,2] <- as.data.frame(forecast(male_birth_smoke_ets, h = 5))[,1]
+
+female_birth_smoke_ets <- ets(women_smoke$smoke_rate[1:24])
+women_smoke[25:29,2] <- as.data.frame(forecast(female_birth_smoke_ets, h = 5))[,1]
+
+male_65_smoke_ets <- ets(men_65_smoke$smoke_rate[1:24])
+men_65_smoke[25:29,2] <- as.data.frame(forecast(male_65_smoke_ets, h = 5))[,1]
+
+female_65_smoke_ets <- ets(women_65_smoke$smoke_rate[1:24])
+women_65_smoke[25:29,2] <- as.data.frame(forecast(female_65_smoke_ets, h = 5))[,1]
+
+male_birth_obese_ets <- ets(men_smoke$obesity_rate[1:24])
+men_smoke[25:29,3] <- as.data.frame(forecast(male_birth_obese_ets, h = 5))[,1]
+
+female_birth_obese_ets <- ets(women_smoke$obesity_rate[1:24])
+women_smoke[25:29,3] <- as.data.frame(forecast(female_birth_obese_ets, h = 5))[,1]
+
+male_65_obese_ets <- ets(men_65_smoke$obesity_rate[1:24])
+men_65_smoke[25:29,3] <- as.data.frame(forecast(male_65_obese_ets, h = 5))[,1]
+
+female_65_obese_ets <- ets(women_65_smoke$obesity_rate[1:24])
+women_65_smoke[25:29,3] <- as.data.frame(forecast(female_65_obese_ets, h = 5))[,1]
+
+men_smoke <- as.matrix(men_smoke)
+women_smoke <- as.matrix(women_smoke)
+men_65_smoke <- as.matrix(men_65_smoke)
+women_65_smoke <- as.matrix(women_65_smoke)
+
+smoke_obese_projections_filled <- as.data.frame(rbind(men_smoke[,2:3], women_smoke[,2:3], men_65_smoke[,2:3], women_65_smoke[,2:3]))
+```
+
+```{r arima_xreg_2005_2010}
+male_birth_fit <- auto.arima(male_birth$ex[1:24], xreg=men_smoke[1:24,2:3])
+male_birth_arima_xreg <- as.data.frame(forecast(male_birth_fit, h = 5, xreg=men_smoke[25:29,2:3])) %>% 
+  select(`Point Forecast`, `Lo 95`, `Hi 95`)
+male_birth_arima_xreg <- male_birth_arima_xreg %>% 
+  add_row(`Point Forecast` = rep(NA, 24), .before = 1)
+
+female_birth_fit <- auto.arima(female_birth$ex[1:24], xreg=women_smoke[1:24,2:3])
+female_birth_arima_xreg <- as.data.frame(forecast(female_birth_fit, h = 5, xreg=women_smoke[25:29,2:3])) %>% 
+  select(`Point Forecast`, `Lo 95`, `Hi 95`)
+female_birth_arima_xreg <- female_birth_arima_xreg %>% 
+  add_row(`Point Forecast` = rep(NA, 24), .before = 1)
+
+male_65_fit <- auto.arima(male_65$ex[1:24], xreg=men_65_smoke[1:24,2:3])
+male_65_arima_xreg <- as.data.frame(forecast(male_65_fit, h = 5, xreg=men_65_smoke[25:29,2:3])) %>% 
+  select(`Point Forecast`, `Lo 95`, `Hi 95`)
+male_65_arima_xreg <- male_65_arima_xreg %>% 
+  add_row(`Point Forecast` = rep(NA, 24), .before = 1)
+
+female_65_fit <- auto.arima(female_65$ex[1:24], xreg=women_65_smoke[1:24,2:3])
+female_65_arima_xreg <- as.data.frame(forecast(female_65_fit, h = 5, xreg=women_65_smoke[25:29,2:3])) %>% 
+  select(`Point Forecast`, `Lo 95`, `Hi 95`)
+female_65_arima_xreg <- female_65_arima_xreg %>% 
+  add_row(`Point Forecast` = rep(NA, 24), .before = 1)
+
+arima_forecasts_xreg <- rbind(male_birth_arima_xreg, female_birth_arima_xreg, male_65_arima_xreg, female_65_arima_xreg)
+colnames(arima_forecasts_xreg) <- c('point_arima_xreg', 'lo95_arima_xreg', 'hi95_arima_xreg')
+
+obs.df_2005 <- bind_cols(obs.df_2005,arima_forecasts_xreg)
+```
+
+```{r add_observed_2005}
+post_2005_observed <- obs.df.future %>%
+  select(year, ex) %>% 
+  filter(year %in% 2006:2010) %>% 
+  add_row(year = 1982:2005, .before = 1) %>% 
+  add_row(year = 1982:2005, .before = 30) %>% 
+  add_row(year = 1982:2005, .before = 59) %>% 
+  add_row(year = 1982:2005, .before = 88) %>% 
+  select(ex)
+colnames(post_2005_observed) <- "observed"
+
+obs.df_2005 <- bind_cols(obs.df_2005, post_2005_observed)
+
+ssa_projections_2010 <- read_csv('2006_trustees_report_projections.csv')[1:20,1:5] %>% 
+  add_row(year = 1982:2005, type_order = 1, .before = 1) %>% 
+  add_row(year = 1982:2005, type_order = 2, .before = 30) %>% 
+  add_row(year = 1982:2005, type_order = 3, .before = 59) %>% 
+  add_row(year = 1982:2005, type_order = 4, .before = 88) %>% 
+  select(ssa_projection, lower_bound, upper_bound)
+
+obs.df_2005 <- bind_cols(obs.df_2005, ssa_projections_2010)
+```
+
+
+```{r linear_refit_2000_2005}
+male_birth <- obs.df.future %>% 
+  filter(type == "Male Life Expectancy at Birth") %>% 
+  filter(year <= 2005)
+male_birth[20:24, 4] <- NA
+male_birth <- male_birth[,1:6]
+  
+male_birth_lm <- lm(
+    ex ~ year,
+    data = male_birth)
+
+male_birth_preds <- predict(
+    male_birth_lm,
+    newdata = male_birth,
+    interval = "confidence"
+)
+
+female_birth <- obs.df.future %>% 
+  filter(type == "Female Life Expectancy at Birth") %>% 
+  filter(year <= 2005)
+male_birth[20:24, 4] <- NA
+male_birth <- male_birth[,1:6]
+  
+female_birth_lm <- lm(
+    ex ~ year,
+    data = female_birth)
+
+female_birth_preds <- predict(
+    female_birth_lm,
+    newdata = female_birth,
+    interval = "confidence"
+)
+
+male_65 <- obs.df.future %>% 
+  filter(type == "Male Life Expectancy at 65") %>% 
+  filter(year <= 2005)
+male_birth[20:24, 4] <- NA
+male_birth <- male_birth[,1:6]
+  
+male_65_lm <- lm(
+    ex ~ year,
+    data = male_65)
+
+male_65_preds <- predict(
+    male_65_lm,
+    newdata = male_65,
+    interval = "confidence"
+)
+
+female_65 <- obs.df.future %>% 
+  filter(type == "Female Life Expectancy at 65") %>% 
+  filter(year <= 2005)
+male_birth[20:24, 4] <- NA
+male_birth <- male_birth[,1:6]
+  
+female_65_lm <- lm(
+    ex ~ year,
+    data = female_65)
+
+female_65_preds <- predict(
+    female_65_lm,
+    newdata = female_65,
+    interval = "confidence"
+)
+
+linear_preds <- as.data.frame(rbind(male_birth_preds, female_birth_preds, male_65_preds, female_65_preds))
+colnames(linear_preds) <- c("fit", "lwr", "upr")
+
+obs.df_2000 <- obs.df.future %>% 
+  filter(year <= 2005) %>% 
+  mutate(ex = ifelse(year > 2000, NA, ex)) %>% 
+  select(year, sex, age, ex, type, type_order)
+
+obs.df_2000 <- bind_cols(obs.df_2000, linear_preds)
+```
+
+```{r smoke_and_obese_projections_2000}
+men_smoke <- smoke_obese_projections %>% 
+  filter(type_order == 1) %>% 
+  filter(year <= 2005)
+women_smoke <- smoke_obese_projections %>% 
+  filter(type_order == 2) %>% 
+  filter(year <= 2005)
+men_65_smoke <- smoke_obese_projections %>% 
+  filter(type_order == 3) %>% 
+  filter(year <= 2005)
+women_65_smoke <- smoke_obese_projections %>% 
+  filter(type_order == 4) %>% 
+  filter(year <= 2005)
+
+male_birth_smoke_ets <- ets(men_smoke$smoke_rate[1:19])
+men_smoke[20:24,2] <- as.data.frame(forecast(male_birth_smoke_ets, h = 5))[,1]
+
+female_birth_smoke_ets <- ets(women_smoke$smoke_rate[1:19])
+women_smoke[20:24,2] <- as.data.frame(forecast(female_birth_smoke_ets, h = 5))[,1]
+
+male_65_smoke_ets <- ets(men_65_smoke$smoke_rate[1:19])
+men_65_smoke[20:24,2] <- as.data.frame(forecast(male_65_smoke_ets, h = 5))[,1]
+
+female_65_smoke_ets <- ets(women_65_smoke$smoke_rate[1:19])
+women_65_smoke[20:24,2] <- as.data.frame(forecast(female_65_smoke_ets, h = 5))[,1]
+
+male_birth_obese_ets <- ets(men_smoke$obesity_rate[1:19])
+men_smoke[20:2425:29,3] <- as.data.frame(forecast(male_birth_obese_ets, h = 5))[,1]
+
+female_birth_obese_ets <- ets(women_smoke$obesity_rate[1:19])
+women_smoke[20:24,3] <- as.data.frame(forecast(female_birth_obese_ets, h = 5))[,1]
+
+male_65_obese_ets <- ets(men_65_smoke$obesity_rate[1:19])
+men_65_smoke[20:24,3] <- as.data.frame(forecast(male_65_obese_ets, h = 5))[,1]
+
+female_65_obese_ets <- ets(women_65_smoke$obesity_rate[1:19])
+women_65_smoke[20:24,3] <- as.data.frame(forecast(female_65_obese_ets, h = 5))[,1]
+
+men_smoke <- as.matrix(men_smoke)
+women_smoke <- as.matrix(women_smoke)
+men_65_smoke <- as.matrix(men_65_smoke)
+women_65_smoke <- as.matrix(women_65_smoke)
+
+smoke_obese_projections_filled <- as.data.frame(rbind(men_smoke[,2:3], women_smoke[,2:3], men_65_smoke[,2:3], women_65_smoke[,2:3]))
+```
+
+```{r arima_xreg_2000_2005}
+male_birth_fit <- auto.arima(male_birth$ex[1:19], xreg=men_smoke[1:19,2:3])
+male_birth_arima_xreg <- as.data.frame(forecast(male_birth_fit, h = 5, xreg=men_smoke[20:24,2:3])) %>% 
+  select(`Point Forecast`, `Lo 95`, `Hi 95`)
+male_birth_arima_xreg <- male_birth_arima_xreg %>% 
+  add_row(`Point Forecast` = rep(NA, 19), .before = 1)
+
+female_birth_fit <- auto.arima(female_birth$ex[1:19], xreg=women_smoke[1:19,2:3])
+female_birth_arima_xreg <- as.data.frame(forecast(female_birth_fit, h = 5, xreg=women_smoke[20:24,2:3])) %>% 
+  select(`Point Forecast`, `Lo 95`, `Hi 95`)
+female_birth_arima_xreg <- female_birth_arima_xreg %>% 
+  add_row(`Point Forecast` = rep(NA, 19), .before = 1)
+
+male_65_fit <- auto.arima(male_65$ex[1:19], xreg=men_65_smoke[1:19,2:3])
+male_65_arima_xreg <- as.data.frame(forecast(male_65_fit, h = 5, xreg=men_65_smoke[20:24,2:3])) %>% 
+  select(`Point Forecast`, `Lo 95`, `Hi 95`)
+male_65_arima_xreg <- male_65_arima_xreg %>% 
+  add_row(`Point Forecast` = rep(NA, 19), .before = 1)
+
+female_65_fit <- auto.arima(female_65$ex[1:19], xreg=women_65_smoke[1:19,2:3])
+female_65_arima_xreg <- as.data.frame(forecast(female_65_fit, h = 5, xreg=women_65_smoke[20:24,2:3])) %>% 
+  select(`Point Forecast`, `Lo 95`, `Hi 95`)
+female_65_arima_xreg <- female_65_arima_xreg %>% 
+  add_row(`Point Forecast` = rep(NA, 19), .before = 1)
+
+arima_forecasts_xreg <- rbind(male_birth_arima_xreg, female_birth_arima_xreg, male_65_arima_xreg, female_65_arima_xreg)
+colnames(arima_forecasts_xreg) <- c('point_arima_xreg', 'lo95_arima_xreg', 'hi95_arima_xreg')
+
+obs.df_2000 <- bind_cols(obs.df_2000,arima_forecasts_xreg)
+```
+
+```{r add_observed_2000}
+post_2000_observed <- obs.df.future %>%
+  select(year, ex) %>% 
+  filter(year %in% 2001:2005) %>% 
+  add_row(year = 1982:2000, .before = 1) %>% 
+  add_row(year = 1982:2000, .before = 25) %>% 
+  add_row(year = 1982:2000, .before = 49) %>% 
+  add_row(year = 1982:2000, .before = 73) %>% 
+  select(ex)
+colnames(post_2000_observed) <- "observed"
+
+obs.df_2000 <- bind_cols(obs.df_2000, post_2000_observed)
+
+ssa_projections_2005 <- read_csv('2001_trustees_report_projections.csv')[1:20,1:5] %>% 
+  add_row(year = 1982:2000, type_order = 1, .before = 1) %>% 
+  add_row(year = 1982:2000, type_order = 2, .before = 25) %>% 
+  add_row(year = 1982:2000, type_order = 3, .before = 49) %>% 
+  add_row(year = 1982:2000, type_order = 4, .before = 73) %>% 
+  select(ssa_projection, lower_bound, upper_bound)
+
+obs.df_2000 <- bind_cols(obs.df_2000, ssa_projections_2005)
+```
+
+```{r 2000_plot}
+obs.plots.all.2000 <- obs.df_2000 %>%
+  mutate(fit = ifelse(year <= 2000, NA, fit),
+         lwr = ifelse(year <= 2000, NA, lwr),
+         upr = ifelse(year <= 2000, NA, upr))%>% 
+  ggplot(aes(x=year, y=ex)) + geom_point(color="gray19") + scale_x_continuous("Year") + scale_y_continuous("Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Pre-2000 Model Performances for the Years 2001-2005") + geom_line(aes(y=fit), color = "lightseagreen") + geom_line(aes(y=point_arima_xreg), color = "darkorange3") + geom_point(aes(y=ssa_projection), color = "gray40") + geom_point(aes(y = observed)) + geom_ribbon(aes(ymin=lwr, ymax=upr), alpha=0.1, fill = "lightseagreen") + geom_ribbon(aes(ymin=lo95_arima_xreg, ymax=hi95_arima_xreg), alpha=0.1, fill = "darkorange3") + geom_errorbar(aes(ymin=lower_bound, ymax=upper_bound), alpha=0.5, fill = "gray40")
+
+ggsave(filename='figures/systematic/graphics-pred_all_2000-bw-1.pdf', plot=obs.plots.all.2000, height=8, width=8)
+```
+
+```{r 2005_plot}
+obs.plots.all.2005 <- obs.df_2005 %>%
+  mutate(fit = ifelse(year <= 2005, NA, fit),
+         lwr = ifelse(year <= 2005, NA, lwr),
+         upr = ifelse(year <= 2005, NA, upr))%>% 
+  ggplot(aes(x=year, y=ex)) + geom_point(color="gray19") + scale_x_continuous("Year") + scale_y_continuous("Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Pre-2005 Model Performances for the Years 2006-2010") + geom_line(aes(y=fit), color = "lightseagreen") + geom_line(aes(y=point_arima_xreg), color = "darkorange3") + geom_point(aes(y=ssa_projection), color = "gray40") + geom_point(aes(y = observed)) + geom_ribbon(aes(ymin=lwr, ymax=upr), alpha=0.1, fill = "lightseagreen") + geom_ribbon(aes(ymin=lo95_arima_xreg, ymax=hi95_arima_xreg), alpha=0.1, fill = "darkorange3") + geom_errorbar(aes(ymin=lower_bound, ymax=upper_bound), alpha=0.5, fill = "gray40")
+
+ggsave(filename='figures/systematic/graphics-pred_all_2005-bw-1.pdf', plot=obs.plots.all.2005, height=8, width=8)
+```
+
+```{r hmd_v_ssa_plot}
+hmd_v_ssa <- ex.use %>%
+  mutate(type = paste0(sex, age, sep = "")) %>% 
+  ggplot(aes(x=forecast.year, y=hmd_observed)) + scale_x_continuous("Year") + scale_y_continuous("Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Observed Period Life Expectancy") + geom_line(aes(y=hmd_observed), color = "lightseagreen") + geom_line(aes(y=ssa_observed), color = "darkorange3")
+
+ggsave(filename='figures/systematic/graphics-hmd_v_ssa-bw-1.pdf', plot=hmd_v_ssa, height=8, width=8)
+```
+
+
+```{r all_non_linear_univariates}
+obs.plots.all.nonlinear <- obs.df.future %>%
+  mutate(fit = ifelse(year <= 2010, NA, fit)) %>% 
+  ggplot(aes(x=year, y=ex)) + geom_point(color="gray19") + scale_x_continuous("Year") + scale_y_continuous("Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Observed Period Life Expectancy and Nonlinear Univariate Model Performances")+ geom_line(aes(y=yhat), color = "deepskyblue2") + geom_line(aes(y=point_ets), color = "palegreen4") + geom_line(aes(y=point_arima), color = "red4") + geom_point(aes(y = observed)) + theme(plot.title = element_text(size = 14))
+
+ggsave(filename='figures/systematic/graphics-pred_all_nonlinear-bw-1.pdf', plot=obs.plots.all.nonlinear, height=8, width=8)
+```
+
+
+
+
+
+
+
+
+
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
