@@ -15,42 +15,76 @@ library(knitr)
 ```
 
 # Background
-Description of the prior research and what they showed. Back it up with the figure.
+
+The Social Security Administration (SSA) is a key administrative agency of the United States federal government which is tasked with administering Social Security, a social welfare program consisting of retirement, survivors, and disabled social insurance. Funded through the impostion of taxes on more than 166 million working Americans, these benefits are paid from the Social Security Trust Fund. This fund provides a key form of insurance to those U.S. residents who may be unable to work. The balance of the Social Security Trust Fund is therefore of paramount importance in ensuring the long-term health and safety of the U.S. non-working population. 
+
+Beyond the administration of these benefits, the SSA is tasked with understanding and projecting the future health of the trust fund as it relates to key variables such as fertility, mortality, and tax rates. These variables establish the size of U.S.'s working population, retiree population, and the supply of funds which are available to be paid from the former to the latter. As such, understanding the present and future states of these variables is key in ensuring the long-term health of the trust fund and insurance of millions of non-working Americans. The SSA publishes their projections for these values, and more, in the annual OASDI Trustees Report.
+
+In recent years, much attention has been paid to the faltering health of the Social Security Trust Fund. Deservedly so. According to the SSA's own 2017 forecasts, the trust fund balance is expected to fall to 0 by the year 2029. Through their two 2015 papers, "Systematic Bias and Nontransparency in U.S. Social Security Administration Forecasts" and "Explaining Systematic Bias and Nontransparency in U.S. Social Security Administration Forecasts," authors Konstantin Kashin, Gary King, and Samir Soneji assert an even bleaker reality. They argue that the trust fund is actually in greater danger than is suggested by these SSA projections and that, because policy decisions relating to payroll and Social Security taxes are directly guided by the Trustees Report, preservative policies may yet come too late or be insufficient to counteract the true current unhealth of the program. 
+
+https://www.ssa.gov/OACT/TR/2017/lr4b4.html
+
+## The Problem
+
+Through their companion 2015 papers, Kashin et al. argue that implicit biases in Social Security forecasting methologies have precipitated inaccurate projections of key demographic and economic variables. These biases, which have crept in through the subjective determination of hundreds of Ultimate Rates of Decline (UROD) of mortality, have caused the underestimation of life expectancy forecasts, and therefore an overestimation of the trust fund's long-term health. 
+
+Figure 1 visualizes this problem. Each annual Trustees Report analyzed in this paper contains within it a projection of expected period life expectancy in the year 2010, a value representing years left to live for the average person given current mortality rates. In this figure, we see that deviations from truth for each published Trustees Report, especially following the year 2000, are significant. Hovering around a full year of error (an error of 1+ full year of benefits, annually, for 59 million beneficiaries), these projections are significantly skewed. Even the 2010 Trustees Report, which only sought to project life expectancy one year into the future, fails to represent true values within a half a year for any of the four groups. This problem is yet worse in consideration of the fact that alongside these 'Intermediate Cost' projections, 'Low Cost' and 'High Cost' alternatives were proposed to represent forecasting uncertainty. These values are often represented by the SSA as siblings to the upper and lower bounds of a 95% confidence interval. However, we find that for the year 2000 and on, not a single true value falls below the 'High Cost' SSA estimate. As they describe in their work, this fact could have major implications on efficient policymaking.
+
+It is with these issues in mind that Kashin et al. assert the necessity for sweeping changes in Social Security forecasting methodologies. Their first recommendation calls for 1) full transparency of data and forecasting procedures and 2) the simplification of models so that they easily understood and resistant to bias. This paper takes on these recommendations through the implementation of several rudimentary modeling techniques. A description of those models is below. Given the biases described by Kashin et al., even simple unbiased models may provide better estimates for future values and more meaningful confidence estimates than those published by the Social Security Administration. If these models do perform better, it furthers the arguments of Kashin et al. and begs immediate action by the Social Security Administration.
 
 ```{r}
 include_graphics('figures/systematic/graphics-2010-resid-by-tr-bw-1.pdf')
 ```
 
-## Preregistration
-Explain the concept of a preregistration study. What I will be doing. (@Nosek2600)
+## Data
 
-## Importance
-Explain the value of this exercise.
+The data used in this paper were obtained from four sources. First, all data and code necessary to replicate the authors' original papers were obtained from those papers' respective Harvard Dataverse repos (@DVN/28122_2015) (@DVN/28323_2015). Second, Social Security projections from the year 2011 were obtained from the 2011 Trustees Report (@). Third, true life expectancy data for the years 2011-2017 were obtained from the Human Mortality Database (HMD) (@). Finally, health data regarding obesity, smoking, and addiction rates for use as external regressors were obtained from public National Health Interview Survey (NHIS) data (@).
+
+The models used in this paper are fit to life expectancy data acquired from the Human Mortality Database. These models will be assessed upon their performance relative to Social Security Administration forecasts. For fair comparison, all models are fit only to data which would have been available to the Social Security Administration at the time of their forecasting.
+
+## Preregistration
+
+As noted by authors Brian A. Noseka, Charles R. Ebersole, Alexander C. DeHavena, and David T. Mellorain in their recent paper "The Preregistration Revolution," the vital differentiation between prediction and postdiction is often recognized in theory but ignored in practice (@Nosek2600). While research purports to first propose hypotheses then test their veracity, this order can be easily inverted. As a result, overfitting and hindsight biases can easily make their way into research, obscuring the truth. In order to prevent the intrusion of these biases, preregistration of model parameters has become common. Under preregistration, all models are explicitly declared prior to any data analysis. In this way, retroactive model alterations are prevented and bias is limited. As this paper centers around the removal of bias from life expectancy forecasting, all models proposed herein were digitally preregistered in the Government 1006 Slack prior to accessing any future SSA, HMD, or NHIS data.
 
 # Models
-Explain the models being analyzed (short and sweet).
+
+Five models are fit to the data. The first four are univariate, meaning that they only make use of trends in the life expectancy data itself to make forecasts. The fifth model integrates external regressors. The first model is a simple univariate linear time series forecast. The next three make use of the forecasting packages `forecast`, `prophet`, and `ets`, respectively, to analyze the same univariate time series. The final model also uses the `forecast` package, integrating several external regressors to account for specific health trends.
 
 ## Linear Model
-General format of a linear model.
+
+A linear model is fit to Human Mortality Database life expectancy data for the years 1982-2010. Following a traditional format of `Y = a + bX`, a line is fit which minimizes the sum of the squared errors. The trend of this model is used to project future values for the years 2011-2017 such that we expect life expectancy in the year 2011 to be `b` greater than the fit 2010 value, and so on. This models a case in which there is some constant amount of life-extending progress made annually around which true values fluctuate.
 
 ## Non-linear Univariate Models
-Explain what these models seek to do, how they weight more recent observations higher, etc.
 
-Very briefly explain the concepts of each model in turn.
-
-### prophet()
-
-### ets()
+Three non-linear univariate models are fit to the same HMD life expectancy data for the years 1982-2010. Despite increased modeling complexity, these models still operate only by extrapolating trends in the raw life expectancy data. These models primarily differ from the linear model by giving greater weight to more recent observations. They may also attempt to capture seasonality trends should non-linear patterns appear in the data.
 
 ### auto.arima()
 
+The first non-linear model makes use of the r function `auto.arima()`, automatically fitting an appropriate ARIMA model to the data. ARIMA stands for AutoRegressive Integrated Moving Average. The 'Autoregression' component refers to the model's use of lagged values of the same variable's past values (in this case, past life expectancies). The 'Integrated' component refers to the differencing of values from their past values, making values stationary and allowing for more accurate forecasting. Finally the use of a 'Moving Average' smooths short-term fluctuations and captures trends in the data by taking the mean values of subsets of the data and analyzing trends in those averages. Three additional parameters, one for each of these components, are used to capture seasonal trends.  By searching over all possible models within preset constraints, this function returns the best ARIMA model according to the Akaike information criterion (AIC), with an additional correction for use in data with small sample sizes (such as ours).
+
+### prophet()
+
+The second non-linear model makes use of the r function `prophet()`. Prophet is an open source forecasting procedure created by Facebook's Core Data Science Team. This procedure forecasts based upon the fitting of non-linear trends with daily, weekly, and yearly seasonality. As stated in their own documentation, and as would be expected given the forecasting needs of a company like Facebook, these forecasts perform best when given large quantities of data with strong seasonal effects. 
+
+### ets()
+
+The third non-linear model makes use of the r function `ets()`, automatically fitting an appropriate exponential smoothing model to the data. `ets()` models are fit similarly to `auto.arima()` models. Their primary difference, however, lies in the distinction between moving average techniques and exponential smoothing. In moving average models, like those fit in `auto.arima()`, all observations are weighted equally in forecasting. Exponential smoothing, conversely, makes use of exponentially decreasing weights for older observations. Recent trends will therefore tend to influence forecasts more than they would an ARIMA model.
+
 ## External Regressor Model
-Explain what the inclusion of an external regressor does differently. Explain the forecasting of obesity rates and smoking rates.
+
+The final model again makes use of the `auto.arima()` function from the `forecast` package. In this case, however, external regressors are added to the model so that known health trends can be accounted for in the model more accurately. The two external regressors added are the obesity rate (percentage of population with BMI > 30) and the smoking rate (percentage of population who have smoked more than 100 cigarettes in their life and have smoked in the past 30 days) for each respective age and gender group. So that these forecasts are not made on data which would not have been available to the SSA, data beyond 2010 are forecasted using the ets() function.
 
 # Performance
-Obviously format these better and make them smaller but go through and explain which models work well and which ones don't. Explain MSE as a metric for this.
 
-```{r}
+Model projections are plotted below against true values. This visualization gives a general understanding of the differences between models. 
+
+The relative performances of the models are judged primarily on the mean squared error (MSE) of their forecasts. This value is calculated by squaring the difference of each years' forecast and true value. Models with a lower MSE are therefore more accurate to the data. 
+
+Over a 5-year timeframe, all models outperform SSA forecasts in at least two of the tested demographic groups. All but one model (prophet) return an average MSE lower than that of the SSA forecasts. Two forecasts, the linear model and the ARIMA model with external regressors, outperform SSA forecasts in all tested demographic groups.
+
+Over a 7-year timeframe (up to the most recent data), the general MSE performance trends hold. However, in the 'Male Life Expectancy at Birth' demography, SSA forecasts perform better than all other models. This trend can be seen visually in the figures below, as all fit models tend to vastly overestimate life expectancy in this group. Given the visual trends, this may be somewhat of a lucky result for the routinely underestimated SSA forecasts. Further analyses of model performances are presented below.
+
+```{r, fig.show = "hold", out.width = c("50%","50%"), fig.align = "default"}
 include_graphics('figures/systematic/graphics-pred_all-bw-1.pdf')
 include_graphics('figures/systematic/graphics-pred_all_future-bw-1.pdf')
 ```
@@ -64,7 +98,8 @@ include_graphics('figures/systematic/performance_2010_2017.pdf')
 ```
 
 ## Linear Model
-Explain how well the linear model performed. Provide reasoning for this. ie. That there is some constant level of progress in life expectancy. While other models overfit according to recent observations, linear model captures a constant technology coefficient.
+
+A simple linear regression performs relatively well over both the 5-year and 7-year timeframes, even outperforming SSA forecasts in all four demographies over the 2010-2015 timeframe. Especially when compared to the failures of the non-linear models, the success of this model suggests that there may be some constant trend at which life expectancy rises annually for each demographic group. While true values jitter around this linear projection, life-extending technology and health trends may cause a linear upward life expectancy trend. According to this model, male life expectancy at birth will tend to increase by approximately .206 years per year, female life expectancy at birth by approximately .104 years per year, male life expectancy at age 65 by approximately .127 years per year, and female life expectancy at age 65 by approximately .059 years per year.
 
 ```{r}
 include_graphics('figures/systematic/graphics-linear_pred_past_and_future-bw-1.pdf')
@@ -72,14 +107,16 @@ include_graphics('figures/systematic/graphics-linear_pred_future-bw-1.pdf')
 ```
 
 ## Nonlinear Models
-Explain how poorly these models do. Provide reasoning for this. ie. Overfitting according to recent progress from 2005-2010. 
+
+The nonlinear univariate models tested perform relatively poorly, especially in the case of the 'Male Life Expectancy at Birth' subgroup. These models, as described in the 'Models' section above, attempt to fit nonlinear trends to the data. These fits are therefore more dependent upon recent trends than those of linear regressions. This can be seen in Figure (@). Nonlinear univariate models appear to overfit to recent trends. In this case, our models overfit to large increases in life expectancy for all subgroups from the years 2005-2010, extrapolating these high trends to future years. As life expectancies stall somewhat in all subgroups after 2010, our projections overestimate true values, resulting in poor fits.
 
 ```{r}
 include_graphics('figures/systematic/graphics-pred_all_nonlinear-bw-1.pdf')
 ```
 
 ## External Regressor Model
-Explain how this model does well. Provide reasoning for this. ie. Smoking and obesity rates start to level off in recent years, dampening the trends. Where other models fail, this one recognizes that progress on limiting mortality might be slowing and controls.
+
+The ARIMA model with external regressors performs well. This model appears to capture the general trends of the data, including the recent dampening of upward trends. It appears that by integrating external health data on smoking rates and obesity rates, this model has better predictive power than our univariate models. While obesity rates have continued to increase linearly over time, this model may be capturing recent slowing of the downward trend in smoking rates. Making use of this information, the model accurately projects a dampening of the observed upward trend in life expectancies. Further, this model's 95% confidence intervals capture 19/20 true values in the 2011-2015 timeframes. This is better than any other model and indicates that this model could provide meaningful guidance in short-term policymaking.
 
 ```{r}
 include_graphics('figures/systematic/graphics-arima_xreg_pred_future-bw-1.pdf')
@@ -108,6 +145,6 @@ include_graphics('figures/systematic/graphics-hmd_v_ssa-bw-1.pdf')
 ```
 
 # Discussion
-Through the fitting of rudimentary models, I find that outperforming current SSA forecasting methodology does not require significant modeling complexity. In fact, a simple univariate linear regression, fitting only a time trend, outperforms Social Security Administration forecasts in all 12 tested subgroups and 5-year time periods. These findings second Kashin et al. in their view that Social Security Administration forecasting could benefit signficantly from simplification and more open sharing of their methods. While future forecasts will always benefit from further expert tuning, the adoption of these two policies would help to rid SSA forecasts of unintended bias such that they would be able to perform better than a simple linear regression.
+Through the fitting of rudimentary models, I find that outperforming current SSA forecasting methodology does not require significant modeling complexity. In fact, a simple univariate linear regression, fitting only a time trend, outperforms Social Security Administration forecasts in all 12 tested subgroups and 5-year time periods. These findings second Kashin et al. in their view that Social Security Administration forecasting could benefit signficantly from 1) simplification and 2) more open sharing of their methods. While future forecasts will always benefit from further expert tuning, the adoption of these two policies would help to rid SSA forecasts of unintended bias such that they would be able to perform better than a simple linear regression.
 
 # References
