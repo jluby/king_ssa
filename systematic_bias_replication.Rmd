@@ -534,9 +534,9 @@ ggsave(filename='figures/systematic/graphics-ssa_pred_future-bw-1.pdf', plot=obs
 ```{r all_preds_all_data}
 obs.plots.all <- obs.df.future %>%
   mutate(fit = ifelse(year <= 2010, NA, fit)) %>% 
-  ggplot(aes(x=year, y=ex)) + geom_point(color="gray19") + scale_x_continuous("Year") + scale_y_continuous("Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("No One Model Dominates") + geom_line(aes(y=fit), color = "lightseagreen") + geom_line(aes(y=yhat), color = "deepskyblue2") + geom_line(aes(y=point_ets), color = "palegreen4") + geom_line(aes(y=point_arima), color = "red4") + geom_line(aes(y=point_arima_xreg), color = "darkorange3") + geom_line(aes(y=ssa_projection), color = "gray48") + geom_point(aes(y = observed))
+  ggplot(aes(x=year, y=ex)) + geom_point(color="gray19") + scale_x_continuous("Year") + scale_y_continuous("Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("No One Model Dominates, but SSA Forecasts Lag Below") + geom_line(aes(y=fit), color = "lightseagreen") + geom_line(aes(y=yhat), color = "deepskyblue2") + geom_line(aes(y=point_ets), color = "palegreen4") + geom_line(aes(y=point_arima), color = "red4") + geom_line(aes(y=point_arima_xreg), color = "darkorange3") + geom_line(aes(y=ssa_projection), color = "gray48") + geom_point(aes(y = observed))
 
-ggsave(filename='figures/systematic/graphics-pred_all-bw-1.pdf', plot=obs.plots.all, height=4, width=4)
+ggsave(filename='figures/systematic/graphics-pred_all-bw-1.pdf', plot=obs.plots.all, height=8, width=8)
 ```
 
 ```{r all_preds_just_preds}
@@ -544,9 +544,9 @@ obs.plots.all.preds <- obs.df.future %>%
   mutate(fit = ifelse(year <= 2010, NA, fit)) %>% 
   filter(year > 2010,
          year < 2018) %>% 
-  ggplot(aes(x=year, y=ex)) + geom_point(color="gray19") + scale_x_continuous("Year") + scale_y_continuous(NULL) + facet_wrap(~type, nrow=3, ncol=2, scales="free") + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("but SSA Forecasts Lag Below") + geom_line(aes(y=fit), color = "lightseagreen") + geom_line(aes(y=yhat), color = "deepskyblue2") + geom_line(aes(y=point_ets), color = "palegreen4") + geom_line(aes(y=point_arima), color = "red4") + geom_line(aes(y=point_arima_xreg), color = "darkorange3") + geom_line(aes(y=ssa_projection), color = "gray48") + geom_point(aes(y = observed))
+  ggplot(aes(x=year, y=ex)) + geom_point(color="gray19") + scale_x_continuous("Year") + scale_y_continuous(NULL) + facet_wrap(~type, nrow=3, ncol=2, scales="free") + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle(" ") + geom_line(aes(y=fit), color = "lightseagreen") + geom_line(aes(y=yhat), color = "deepskyblue2") + geom_line(aes(y=point_ets), color = "palegreen4") + geom_line(aes(y=point_arima), color = "red4") + geom_line(aes(y=point_arima_xreg), color = "darkorange3") + geom_line(aes(y=ssa_projection), color = "gray48") + geom_point(aes(y = observed))
 
-ggsave(filename='figures/systematic/graphics-pred_all_future-bw-1.pdf', plot=obs.plots.all.preds, height=4, width=4)
+ggsave(filename='figures/systematic/graphics-pred_all_future-bw-1.pdf', plot=obs.plots.all.preds, height=8, width=8)
 ```
 
 ```{r model_fit_tables}
@@ -950,7 +950,7 @@ obs.plots.all.2005 <- obs.df_2005 %>%
   mutate(fit = ifelse(year <= 2005, NA, fit),
          lwr = ifelse(year <= 2005, NA, lwr),
          upr = ifelse(year <= 2005, NA, upr))%>% 
-  ggplot(aes(x=year, y=ex)) + geom_point(color="gray19") + scale_x_continuous("Year") + scale_y_continuous("Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Pre-2005 Model Performances for the Years 2006-2010") + geom_line(aes(y=fit), color = "lightseagreen") + geom_line(aes(y=point_arima_xreg), color = "darkorange3") + geom_point(aes(y=ssa_projection), color = "gray40") + geom_point(aes(y = observed)) + geom_ribbon(aes(ymin=lwr, ymax=upr), alpha=0.1, fill = "lightseagreen") + geom_ribbon(aes(ymin=lo95_arima_xreg, ymax=hi95_arima_xreg), alpha=0.1, fill = "darkorange3") + geom_errorbar(aes(ymin=lower_bound, ymax=upper_bound), alpha=0.5, fill = "gray40")
+  ggplot(aes(x=year, y=ex)) + geom_point(color="gray19") + scale_x_continuous("Year") + scale_y_continuous(NULL) + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Pre-2005 Model Performances for the Years 2006-2010") + geom_line(aes(y=fit), color = "lightseagreen") + geom_line(aes(y=point_arima_xreg), color = "darkorange3") + geom_point(aes(y=ssa_projection), color = "gray40") + geom_point(aes(y = observed)) + geom_ribbon(aes(ymin=lwr, ymax=upr), alpha=0.1, fill = "lightseagreen") + geom_ribbon(aes(ymin=lo95_arima_xreg, ymax=hi95_arima_xreg), alpha=0.1, fill = "darkorange3") + geom_errorbar(aes(ymin=lower_bound, ymax=upper_bound), alpha=0.5, fill = "gray40")
 
 ggsave(filename='figures/systematic/graphics-pred_all_2005-bw-1.pdf', plot=obs.plots.all.2005, height=8, width=8)
 ```
@@ -968,7 +968,7 @@ hmd_v_ssa_use$type= factor(hmd_v_ssa_use$type, levels=c("Male Life Expectancy at
                                                         "Female Life Expectancy at 65"))
 
 hmd_v_ssa <- hmd_v_ssa_use %>% 
-  ggplot(aes(x=forecast.year, y=hmd_observed)) + scale_x_continuous("Year") + scale_y_continuous("Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Data Discrepencies Between HMD and SSA Observed Life Expectancies") + geom_line(aes(y=hmd_observed), color = "lightseagreen") + geom_line(aes(y=ssa_observed), color = "darkorange3") + theme(plot.title = element_text(size = 15))
+  ggplot(aes(x=forecast.year, y=hmd_observed)) + scale_x_continuous("Year") + scale_y_continuous("Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Data Discrepencies Between HMD and SSA Observed Life Expectancies") + geom_line(aes(y=hmd_observed), color = "mediumvioletred") + geom_line(aes(y=ssa_observed), color = "gray48") + theme(plot.title = element_text(size = 15))
 
 ggsave(filename='figures/systematic/graphics-hmd_v_ssa-bw-1.pdf', plot=hmd_v_ssa, height=8, width=8)
 ```
@@ -1014,7 +1014,7 @@ resid2010 <- ggplot(data=ex.use[ex.use$forecast.year==2010,], aes(x=TR, y=hmd_re
 resid2010.labeldf <- data.frame(agelabel=c("Life Expectancy at Birth","Life Expectancy at Birth","Life Expectancy at 65","Life Expectancy at 65"), sex=c("Male","Female","Male","Female"), x=rep(1982,4), y=c(-1.5,1,-2.2,1.5))
 resid2010 <- resid2010 + geom_text(data=resid2010.labeldf, aes(x=x,y=y,label=sex), color="gray19", family=ff) 
 
-ggsave(filename='figures/systematic/graphics-2010-resid-by-tr-bw-1.pdf', plot=resid2010, height=5, width=8)
+ggsave(filename='figures/systematic/graphics-2010-resid-by-tr-bw-1.pdf', plot=resid2010, height=4, width=8)
 ```
 \end{figure}
 
