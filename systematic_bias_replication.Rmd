@@ -528,7 +528,7 @@ obs.plot.ssa <- obs.df.future %>%
   #filter(type_order == 2) %>% 
   ggplot(aes(x=year, y=ex)) + geom_point(color="gray19") + scale_x_continuous("Year") + scale_y_continuous("Life Expectancy (Years)") + facet_wrap(~type, nrow=3, ncol=2, scales="free") + expand_limits(x=1980) + geom_path(color="gray19") + theme(legend.position="none", strip.background = element_rect(fill="snow1"), text=element_text(size=15, color="black")) + ggtitle("Performance of SSA Forecasts") + geom_line(aes(y=ssa_projection), color = "gray48") + geom_ribbon(aes(ymin=lower_bound, ymax=upper_bound), alpha=0.1, fill = "gray48") + geom_point(aes(y = observed))
 
-ggsave(filename='figures/systematic/graphics-ssa_pred_future-bw-1.pdf', plot=obs.plot.ssa, height=8, width=8)
+ggsave(filename='figures/systematic/graphics-ssa_pred_future-bw-1.pdf', plot=obs.plot.ssa, height=7, width=8)
 ```
 
 ```{r all_preds_all_data}
