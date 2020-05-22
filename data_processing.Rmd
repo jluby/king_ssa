@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 library(haven)
-processed <- read_dta('nhis_00002.dta')
+processed <- read_dta('data/nhis_00002.dta')
 ```
 
 ```{r}
@@ -126,5 +126,5 @@ smoking_and_obesity <- bind_cols(all_years_smoke_rates, all_years_obesity_rates)
 smoking_and_obesity <- smoking_and_obesity %>% 
   select(-year1, -type_order)
 colnames(smoking_and_obesity)[4] <- "type_order"
-write_rds(smoking_and_obesity, "smoking_and_obesity.rds")
+write_rds(smoking_and_obesity, "data/smoking_and_obesity.rds")
 ```
